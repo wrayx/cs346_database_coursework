@@ -41,7 +41,17 @@ hdfs dfs -ls input/1G/store
 # hdfs cat dat file first line
 hdfs dfs -cat input/1G/store/store.dat>&1 | head -n 1
 
-# Create Jar file
-jar cfe myJar.jar myClass myClass.class
+# Compile java code
+hadoop com.sun.tools.javac.Main WordCount.java
+
+# Create jar file 
+jar cf wc.jar WordCount*.class
+
+# run program
+hadoop jar wc.jar WordCount input/wc output/wclabsheet
+
+# view results
+hdfs dfs -ls output/wclabsheet
+hdfs dfs -cat output/wclabsheet/part-r-00000
 
 ```

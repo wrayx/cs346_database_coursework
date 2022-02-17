@@ -1,8 +1,9 @@
 
 // importing Libraries
 import java.io.IOException;
-// import java.util.Map;
-// import java.util.TreeMap;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -19,6 +20,14 @@ public class TopKNetProfit {
     public static class TopKNetProfitMapper extends
             Mapper<LongWritable, Text, Text, FloatWritable> {
 
+        private TreeMap<Float, String> tmap;
+
+        @Override
+        public void setup(Context context) throws IOException,
+                InterruptedException {
+            tmap = new TreeMap<Float, String>();
+        }
+
         @Override
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException {
@@ -27,46 +36,98 @@ public class TopKNetProfit {
             // we will use the value passed in start date and end date at runtime
             long start_date = Long.parseLong(conf.get("start_date"));
             long end_date = Long.parseLong(conf.get("end_date"));
+            int k = Integer.parseInt(conf.get("K"));
 
-            String[] tokens = value.toString().split("|");
-            long sold_date = Long.parseLong(tokens[0]);
+            String[] tokens = value.toString().split(Pattern.quote("|"), -1);
+            // for (String t: tokens){
+            // System.out.print(t);
+            // System.out.print("===");
+            // }
+            // System.out.println();
+            // long sold_date = Long.parseLong(tokens[0].trim());
+            String sold_date_str = tokens[0];
             String store = tokens[7];
-            float net_paid = Float.parseFloat(tokens[20]);
+            String net_paid_str = tokens[20];
+            long sold_date;
+            float net_paid;
 
-            if (sold_date > start_date && sold_date < end_date) {
-                context.write(new Text(store), new FloatWritable(net_paid));
+            try {
+                sold_date = Long.parseLong(sold_date_str.trim());
+            } catch (NumberFormatException e) {
+                sold_date = 0;
             }
 
+            try {
+                net_paid = Float.parseFloat(net_paid_str.trim());
+            } catch (NumberFormatException e) {
+                net_paid = 0;
+            }
+
+            if (sold_date > start_date && sold_date < end_date) {
+                tmap.put(net_paid, store);
+            }
+
+            if (tmap.size() > k) {
+                tmap.remove(tmap.firstKey());
+            }
+
+            // System.out.println("store = " + store);
+            // System.out.println("sold date = " + sold_date);
+            // System.out.println("net paid = " + net_paid);
+
+        }
+
+        @Override
+        public void cleanup(Context context) throws IOException,
+                InterruptedException {
+            for (Map.Entry<Float, String> entry : tmap.entrySet()) {
+
+                float count = entry.getKey();
+                String store = entry.getValue();
+                String name = "ss_store_sk_";
+                store = name.concat(store);
+
+                context.write(new Text(store), new FloatWritable(count));
+            }
         }
     }
 
     public static class TopKNetProfitReducer extends
             Reducer<Text, FloatWritable, Text, FloatWritable> {
-            
-            private FloatWritable result = new FloatWritable();
 
-        // private TreeMap<Float, String> treemap;
+        // private FloatWritable result = new FloatWritable();
 
-        // public void setup(Context context) throws IOException,
-        // InterruptedException {
-        // treemap = new TreeMap<Float, String>();
-        // }
+        private TreeMap<Float, String> tmap2;
+
+        public void setup(Context context) throws IOException,
+                InterruptedException {
+            tmap2 = new TreeMap<Float, String>();
+        }
 
         @Override
         public void reduce(Text key, Iterable<FloatWritable> values, Context context)
                 throws IOException, InterruptedException {
 
-            // Configuration conf = context.getConfiguration();
-            // we will use the value passed in start date and end date at runtime
-            // long k = Long.parseLong(conf.get("K"));
+            Configuration conf = context.getConfiguration();
+            int k = Integer.parseInt(conf.get("K"));
 
+            // System.out.println(key);
+            // for (FloatWritable t : values) {
+            // System.out.print(t);
+            // System.out.print("===");
+            // }
+            // System.out.println();
             // String store = key.toString();
-            float storeNetProfitSum = 0;
+            String store = key.toString();
+            float netProfit = 0;
             for (FloatWritable value : values) {
-                storeNetProfitSum = storeNetProfitSum + value.get();
+                netProfit = value.get();
             }
-            result.set(storeNetProfitSum);
-            context.write(key, result);
+            tmap2.put(netProfit, store);
+
+            if (tmap2.size() > k) {
+                tmap2.remove(tmap2.firstKey());
+            }
 
             // treemap.put(storeNetProfitSum, store);
             // if (treemap.size() > k) {
@@ -74,20 +135,20 @@ public class TopKNetProfit {
             // }
         }
 
-        // public void cleanup(Context context) throws IOException,
-        // InterruptedException {
+        public void cleanup(Context context) throws IOException,
+                InterruptedException {
 
-        // for (Map.Entry<Float, String> entry : treemap.entrySet()) {
-        // float netProfit = entry.getKey();
-        // long store = Long.parseLong(entry.getValue());
-        // context.write(new LongWritable(store), new FloatWritable(netProfit));
-        // }
-        // }
+            for (Float key : tmap2.descendingKeySet()) {
+                float netProfit = key;
+                String store = tmap2.get(key);
+                context.write(new Text(store), new FloatWritable(netProfit));
+            }
+        }
 
     }
 
     public static void main(String[] args) throws Exception {
-        
+
         if (args.length != 5) {
             System.err.println(
                     "Usage: Top Net Profit <K> <start_date> <end_date> <input_file> <output_path>");

@@ -51,12 +51,12 @@ hdfs dfs -cat output/wclabsheet/part-r-00000
 hdfs dfs -rm -r output/*
 
 # current query 1 output
-ss_store_sk_1   18470.0
-ss_store_sk_8   18085.15
-ss_store_sk_4   18084.92
-ss_store_sk_7   17914.56
-ss_store_sk_10  17866.23
-ss_store_sk_2   17579.0
+ss_store_sk_4   19079.0
+ss_store_sk_10  18963.0
+ss_store_sk_2   18460.4
+ss_store_sk_7   18270.0
+ss_store_sk_8   18130.27
+ss_store_sk_1   17902.32
 
 ```
 

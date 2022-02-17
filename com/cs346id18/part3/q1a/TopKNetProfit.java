@@ -2,6 +2,7 @@ package com.cs346id18.part3.q1a;
 
 // importing Libraries
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
@@ -9,6 +10,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -19,14 +21,14 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class TopKNetProfit {
     public static class TopKNetProfitMapper extends
-            Mapper<LongWritable, Text, Text, FloatWritable> {
+            Mapper<LongWritable, Text, IntWritable, FloatWritable> {
 
-        private TreeMap<Float, String> tmap;
+        private TreeMap<Float, Integer> tmap;
 
         @Override
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap = new TreeMap<Float, String>();
+            tmap = new TreeMap<Float, Integer>((Comparator.reverseOrder()));
         }
 
         @Override
@@ -47,10 +49,17 @@ public class TopKNetProfit {
             // System.out.println();
             // long sold_date = Long.parseLong(tokens[0].trim());
             String sold_date_str = tokens[0];
-            String store = tokens[7];
+            String store_str = tokens[7];
             String net_paid_str = tokens[20];
             long sold_date;
             float net_paid;
+            int store;
+
+            try {
+                store = Integer.parseInt(store_str.trim());
+            } catch (NumberFormatException e) {
+                store = -1;
+            }
 
             try {
                 sold_date = Long.parseLong(sold_date_str.trim());
@@ -63,13 +72,17 @@ public class TopKNetProfit {
             } catch (NumberFormatException e) {
                 net_paid = 0;
             }
-
+            
+            // insert data into treeMap,
+            // we want top K net profit entries
+            // so we pass net_paid as key
             if (sold_date > start_date && sold_date < end_date) {
                 tmap.put(net_paid, store);
             }
-
+            // remove the first key-value
+            // if it's size increases to K
             if (tmap.size() > k) {
-                tmap.remove(tmap.firstKey());
+                tmap.remove(tmap.lastKey());
             }
 
             // System.out.println("store = " + store);
@@ -81,32 +94,30 @@ public class TopKNetProfit {
         @Override
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
-            for (Map.Entry<Float, String> entry : tmap.entrySet()) {
+            for (Map.Entry<Float, Integer> entry : tmap.entrySet()) {
 
-                float count = entry.getKey();
-                String store = entry.getValue();
-                String name = "ss_store_sk_";
-                store = name.concat(store);
+                float profit = entry.getKey();
+                int store = entry.getValue();
 
-                context.write(new Text(store), new FloatWritable(count));
+                context.write(new IntWritable(store), new FloatWritable(profit));
             }
         }
     }
 
     public static class TopKNetProfitReducer extends
-            Reducer<Text, FloatWritable, Text, FloatWritable> {
+            Reducer<IntWritable, FloatWritable, Text, FloatWritable> {
 
         // private FloatWritable result = new FloatWritable();
 
-        private TreeMap<Float, String> tmap2;
+        private TreeMap<Float, Integer> tmap2;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Float, String>();
+            tmap2 = new TreeMap<Float, Integer>(Comparator.reverseOrder());
         }
 
         @Override
-        public void reduce(Text key, Iterable<FloatWritable> values, Context context)
+        public void reduce(IntWritable key, Iterable<FloatWritable> values, Context context)
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
@@ -119,7 +130,7 @@ public class TopKNetProfit {
             // }
             // System.out.println();
             // String store = key.toString();
-            String store = key.toString();
+            int store = Integer.parseInt(key.toString());
             float netProfit = 0;
             for (FloatWritable value : values) {
                 netProfit = value.get();
@@ -127,7 +138,7 @@ public class TopKNetProfit {
             tmap2.put(netProfit, store);
 
             if (tmap2.size() > k) {
-                tmap2.remove(tmap2.firstKey());
+                tmap2.remove(tmap2.lastKey());
             }
 
             // treemap.put(storeNetProfitSum, store);
@@ -139,9 +150,12 @@ public class TopKNetProfit {
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Float key : tmap2.descendingKeySet()) {
-                float netProfit = key;
-                String store = tmap2.get(key);
+            for (Map.Entry<Float, Integer> entry : tmap2.entrySet()) {
+                float netProfit = entry.getKey();;
+                String store = Integer.toString(entry.getValue());
+                String name = "ss_store_sk_";
+                store = name.concat(store);
+
                 context.write(new Text(store), new FloatWritable(netProfit));
             }
         }
@@ -172,8 +186,8 @@ public class TopKNetProfit {
         job.setMapperClass(TopKNetProfitMapper.class);
         job.setReducerClass(TopKNetProfitReducer.class);
 
-        // job.setMapOutputKeyClass(LongWritable.class);
-        // job.setMapOutputValueClass(FloatWritable.class);
+        job.setMapOutputKeyClass(IntWritable.class);
+        job.setMapOutputValueClass(FloatWritable.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(FloatWritable.class);
 

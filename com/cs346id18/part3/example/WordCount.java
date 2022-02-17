@@ -1,3 +1,5 @@
+package com.cs346id18.part3.example;
+
 import java.io.IOException;
 import java.util.StringTokenizer;
 

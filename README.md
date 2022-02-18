@@ -1,8 +1,27 @@
-# cs346-big-data-coursework
+# CS346
 
-## Hadoop & Map Reduce Tutorials
-[MapReduce Program – Weather Data Analysis For Analyzing Hot And Cold Days
+## TODO
+Part 3: 
+- [ ] Query 1.a
+- [ ] Query 1.b
+- [ ] Query 1.c
+- [ ] Query 2 (Reduce Side Join)
+
+Part 4:
+- [ ] Hive schema
+- [ ] Query 1.a
+- [ ] Query 1.b
+- [ ] Query 1.c
+- [ ] Query 2 (Reduce Side Join)
+
+Report:
+- [ ] ..
+
+
+## Tutorials 
++ [MapReduce Program – Weather Data Analysis For Analyzing Hot And Cold Days
 ](https://www.geeksforgeeks.org/mapreduce-program-weather-data-analysis-for-analyzing-hot-and-cold-days/?ref=lbp)
++ [Apache Hive - Language Manual](https://cwiki.apache.org/confluence/display/Hive/LanguageManual)
 
 ## Git
 [Git cheat sheet](https://education.github.com/git-cheat-sheet-education.pdf)
@@ -49,15 +68,6 @@ hdfs dfs -cat output/wclabsheet/part-r-00000
 
 # delete output
 hdfs dfs -rm -r output/*
-
-# current query 1 output
-ss_store_sk_4   19079.0
-ss_store_sk_10  18963.0
-ss_store_sk_2   18460.4
-ss_store_sk_7   18270.0
-ss_store_sk_8   18130.27
-ss_store_sk_1   17902.32
-
 ```
 
 ## Hive commands

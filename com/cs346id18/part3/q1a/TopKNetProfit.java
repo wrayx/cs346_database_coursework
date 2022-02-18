@@ -139,6 +139,7 @@ public class TopKNetProfit {
             totalNetProfit = 0;
             for (FloatWritable value : values) {
                 // netProfit = value.get();
+                // divide by 1,000,000 other wise too big for storing as a long
                 totalNetProfit += ((double) value.get()) / 1000000;
                 // totalNetProfit = Double.valueOf(df.format(totalNetProfit));
             }

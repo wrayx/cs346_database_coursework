@@ -1,6 +1,6 @@
 # CS346
 
-## TODO
+## TODOs
 Part 3: 
 - [ ] Query 1.a
 - [ ] Query 1.b

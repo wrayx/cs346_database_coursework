@@ -2,6 +2,7 @@ package com.cs346id18.part3.q1a;
 
 // importing Libraries
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -9,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
+// import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
@@ -23,13 +25,13 @@ public class TopKNetProfit {
     public static class TopKNetProfitMapper extends
             Mapper<LongWritable, Text, IntWritable, FloatWritable> {
 
-        private TreeMap<Float, Integer> tmap;
+        // private TreeMap<Float, Integer> tmap;
 
-        @Override
-        public void setup(Context context) throws IOException,
-                InterruptedException {
-            tmap = new TreeMap<Float, Integer>((Comparator.reverseOrder()));
-        }
+        // @Override
+        // public void setup(Context context) throws IOException,
+        //         InterruptedException {
+        //     tmap = new TreeMap<Float, Integer>((Comparator.reverseOrder()));
+        // }
 
         @Override
         public void map(LongWritable key, Text value, Context context)
@@ -39,7 +41,6 @@ public class TopKNetProfit {
             // we will use the value passed in start date and end date at runtime
             long start_date = Long.parseLong(conf.get("start_date"));
             long end_date = Long.parseLong(conf.get("end_date"));
-            int k = Integer.parseInt(conf.get("K"));
 
             String[] tokens = value.toString().split(Pattern.quote("|"), -1);
             // for (String t: tokens){
@@ -55,6 +56,7 @@ public class TopKNetProfit {
             float net_paid;
             int store;
 
+            // check if the cell is empty
             try {
                 store = Integer.parseInt(store_str.trim());
             } catch (NumberFormatException e) {
@@ -76,14 +78,14 @@ public class TopKNetProfit {
             // insert data into treeMap,
             // we want top K net profit entries
             // so we pass net_paid as key
-            if (sold_date > start_date && sold_date < end_date) {
-                tmap.put(net_paid, store);
+            if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
+                context.write(new IntWritable(store), new FloatWritable(net_paid));
             }
             // remove the first key-value
             // if it's size increases to K
-            if (tmap.size() > k) {
-                tmap.remove(tmap.lastKey());
-            }
+            // if (tmap.size() > k) {
+            //     tmap.remove(tmap.lastKey());
+            // }
 
             // System.out.println("store = " + store);
             // System.out.println("sold date = " + sold_date);
@@ -91,17 +93,17 @@ public class TopKNetProfit {
 
         }
 
-        @Override
-        public void cleanup(Context context) throws IOException,
-                InterruptedException {
-            for (Map.Entry<Float, Integer> entry : tmap.entrySet()) {
+        // @Override
+        // public void cleanup(Context context) throws IOException,
+        //         InterruptedException {
+        //     for (Map.Entry<Float, Integer> entry : tmap.entrySet()) {
 
-                float profit = entry.getKey();
-                int store = entry.getValue();
+        //         float profit = entry.getKey();
+        //         int store = entry.getValue();
 
-                context.write(new IntWritable(store), new FloatWritable(profit));
-            }
-        }
+        //         context.write(new IntWritable(store), new FloatWritable(profit));
+        //     }
+        // }
     }
 
     public static class TopKNetProfitReducer extends
@@ -109,11 +111,12 @@ public class TopKNetProfit {
 
         // private FloatWritable result = new FloatWritable();
 
-        private TreeMap<Float, Integer> tmap2;
+        private TreeMap<Double, Integer> tmap2;
+        private double totalNetProfit;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Float, Integer>(Comparator.reverseOrder());
+            tmap2 = new TreeMap<Double, Integer>(Comparator.reverseOrder());
         }
 
         @Override
@@ -130,33 +133,34 @@ public class TopKNetProfit {
             // }
             // System.out.println();
             // String store = key.toString();
-            int store = Integer.parseInt(key.toString());
-            float netProfit = 0;
+            int store = key.get();
+            // DecimalFormat df = new DecimalFormat("#.##");
+            // float netProfit = 0;
+            totalNetProfit = 0;
             for (FloatWritable value : values) {
-                netProfit = value.get();
+                // netProfit = value.get();
+                totalNetProfit += ((double) value.get()) / 1000000;
+                // totalNetProfit = Double.valueOf(df.format(totalNetProfit));
             }
-            tmap2.put(netProfit, store);
+            tmap2.put(totalNetProfit, store);
 
             if (tmap2.size() > k) {
                 tmap2.remove(tmap2.lastKey());
             }
-
-            // treemap.put(storeNetProfitSum, store);
-            // if (treemap.size() > k) {
-            // treemap.remove(treemap.firstKey());
-            // }
         }
 
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<Float, Integer> entry : tmap2.entrySet()) {
-                float netProfit = entry.getKey();;
-                String store = Integer.toString(entry.getValue());
-                String name = "ss_store_sk_";
-                store = name.concat(store);
+            for (Map.Entry<Double, Integer> entry : tmap2.entrySet()) {
+                DecimalFormat df = new DecimalFormat("#.##");
+                totalNetProfit = entry.getKey();
+                float totalNetProfitf = Float.valueOf(df.format(totalNetProfit));
+                int store = entry.getValue();
+                String columnName = "ss_store_sk_";
+                columnName = columnName.concat(Integer.toString(store));
 
-                context.write(new Text(store), new FloatWritable(netProfit));
+                context.write(new Text(columnName), new FloatWritable(totalNetProfitf));
             }
         }
 

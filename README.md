@@ -1,13 +1,13 @@
 # CS346
 
 ## TODOs
-Part 3: 
+Part 3 Java Map-Reduce: 
 - [ ] Query 1.a
 - [ ] Query 1.b
 - [ ] Query 1.c
 - [ ] Query 2 (Reduce Side Join)
 
-Part 4:
+Part 4 Hive Query:
 - [ ] Hive schema
 - [ ] Query 1.a
 - [ ] Query 1.b
@@ -22,6 +22,7 @@ Report:
 + [MapReduce Program – Weather Data Analysis For Analyzing Hot And Cold Days
 ](https://www.geeksforgeeks.org/mapreduce-program-weather-data-analysis-for-analyzing-hot-and-cold-days/?ref=lbp)
 + [Apache Hive - Language Manual](https://cwiki.apache.org/confluence/display/Hive/LanguageManual)
++ [Importing Data from Files into Hive Tables](https://www.informit.com/articles/article.aspx?p=2756471&seqNum=4)
 
 ## Git
 [Git cheat sheet](https://education.github.com/git-cheat-sheet-education.pdf)

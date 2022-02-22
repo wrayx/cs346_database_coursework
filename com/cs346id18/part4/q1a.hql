@@ -22,9 +22,9 @@ ORDER BY net_paid DESC;
 -- 6 rows selected (42.337 seconds)
 
 -- MapReduce output:
--- ss_store_sk_8   479.05
--- ss_store_sk_7   479.05
--- ss_store_sk_2   477.59
--- ss_store_sk_10  476.65
--- ss_store_sk_1   475.46
--- ss_store_sk_4   475.4
+-- ss_store_sk_8   479051954.38
+-- ss_store_sk_7   479048569.13
+-- ss_store_sk_2   477594514.73
+-- ss_store_sk_10  476650853.89
+-- ss_store_sk_1   475457349
+-- ss_store_sk_4   475400665.43

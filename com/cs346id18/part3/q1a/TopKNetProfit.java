@@ -2,6 +2,8 @@ package com.cs346id18.part3.q1a;
 
 // importing Libraries
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.Map;
@@ -10,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.DoubleWritable;
 // import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -107,16 +110,16 @@ public class TopKNetProfit {
     }
 
     public static class TopKNetProfitReducer extends
-            Reducer<IntWritable, FloatWritable, Text, FloatWritable> {
+            Reducer<IntWritable, FloatWritable, Text, Text> {
 
-        // private FloatWritable result = new FloatWritable();
+        // private DoubleWritable result = new DoubleWritable();
 
-        private TreeMap<Long, Integer> tmap2;
-        private long totalNetProfit;
+        private TreeMap<Double, Integer> tmap2;
+        private double totalNetProfit;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Long, Integer>(Comparator.reverseOrder());
+            tmap2 = new TreeMap<Double, Integer>(Comparator.reverseOrder());
         }
 
         @Override
@@ -127,7 +130,7 @@ public class TopKNetProfit {
             int k = Integer.parseInt(conf.get("K"));
 
             // System.out.println(key);
-            // for (FloatWritable t : values) {
+            // for (DoubleWritable t : values) {
             // System.out.print(t);
             // System.out.print("===");
             // }
@@ -140,7 +143,7 @@ public class TopKNetProfit {
             for (FloatWritable value : values) {
                 // netProfit = value.get();
                 // divide by 1,000,000 other wise too big for storing as a long
-                totalNetProfit += ((long) value.get()) * 100;
+                totalNetProfit += (double) value.get();
                 // totalNetProfit = long.valueOf(df.format(totalNetProfit));
             }
             tmap2.put(totalNetProfit, store);
@@ -153,16 +156,15 @@ public class TopKNetProfit {
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<Long, Integer> entry : tmap2.entrySet()) {
+            for (Map.Entry<Double, Integer> entry : tmap2.entrySet()) {
                 DecimalFormat df = new DecimalFormat("#.##");
-                totalNetProfit = entry.getKey();
-                // float totalNetProfitf = Float.valueOf(df.format(totalNetProfit/100));
-                float totalNetProfitf = Float.valueOf(totalNetProfit/100);
+                totalNetProfit = (double) entry.getKey();
                 int store = entry.getValue();
+                String totalNetProfit_str = String.valueOf(df.format(totalNetProfit));
                 String columnName = "ss_store_sk_";
                 columnName = columnName.concat(Integer.toString(store));
 
-                context.write(new Text(columnName), new FloatWritable(totalNetProfitf));
+                context.write(new Text(columnName), new Text(totalNetProfit_str));
             }
         }
 
@@ -195,7 +197,7 @@ public class TopKNetProfit {
         job.setMapOutputKeyClass(IntWritable.class);
         job.setMapOutputValueClass(FloatWritable.class);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(FloatWritable.class);
+        job.setOutputValueClass(Text.class);
 
         FileInputFormat.addInputPath(job, new Path(source));
         FileOutputFormat.setOutputPath(job, new Path(dest));

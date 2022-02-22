@@ -8,19 +8,19 @@ ORDER BY net_paid DESC;
 
 -- HIVE output:
 
--- Total MapReduce CPU Time Spent: 16 seconds 200 msec
+-- Total MapReduce CPU Time Spent: 18 seconds 50 msec
 -- OK
--- +--------------+---------------+
--- | ss_store_sk  |   net_paid    |
--- +--------------+---------------+
--- | 8            | 479051954.37  |
--- | 7            | 479048569.12  |
--- | 2            | 477594514.78  |
--- | 10           | 476650853.94  |
--- | 1            | 475457349.02  |
--- | 4            | 475400665.40  |
--- +--------------+---------------+
--- 6 rows selected (42.337 seconds)
+-- +-----------------+---------------+
+-- |      store      |   net_paid    |
+-- +-----------------+---------------+
+-- | ss_store_sk_8   | 479051954.37  |
+-- | ss_store_sk_7   | 479048569.12  |
+-- | ss_store_sk_2   | 477594514.78  |
+-- | ss_store_sk_10  | 476650853.94  |
+-- | ss_store_sk_1   | 475457349.02  |
+-- | ss_store_sk_4   | 475400665.40  |
+-- +-----------------+---------------+
+-- 6 rows selected (42.936 seconds)
 
 -- MapReduce output:
 -- ss_store_sk_8   479051954.38

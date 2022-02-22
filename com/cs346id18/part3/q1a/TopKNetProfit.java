@@ -111,12 +111,12 @@ public class TopKNetProfit {
 
         // private FloatWritable result = new FloatWritable();
 
-        private TreeMap<Double, Integer> tmap2;
-        private double totalNetProfit;
+        private TreeMap<Long, Integer> tmap2;
+        private long totalNetProfit;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Double, Integer>(Comparator.reverseOrder());
+            tmap2 = new TreeMap<Long, Integer>(Comparator.reverseOrder());
         }
 
         @Override
@@ -140,8 +140,8 @@ public class TopKNetProfit {
             for (FloatWritable value : values) {
                 // netProfit = value.get();
                 // divide by 1,000,000 other wise too big for storing as a long
-                totalNetProfit += ((double) value.get()) / 1000000;
-                // totalNetProfit = Double.valueOf(df.format(totalNetProfit));
+                totalNetProfit += ((long) value.get()) * 100;
+                // totalNetProfit = long.valueOf(df.format(totalNetProfit));
             }
             tmap2.put(totalNetProfit, store);
 
@@ -153,10 +153,11 @@ public class TopKNetProfit {
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<Double, Integer> entry : tmap2.entrySet()) {
+            for (Map.Entry<Long, Integer> entry : tmap2.entrySet()) {
                 DecimalFormat df = new DecimalFormat("#.##");
                 totalNetProfit = entry.getKey();
-                float totalNetProfitf = Float.valueOf(df.format(totalNetProfit));
+                // float totalNetProfitf = Float.valueOf(df.format(totalNetProfit/100));
+                float totalNetProfitf = Float.valueOf(totalNetProfit/100);
                 int store = entry.getValue();
                 String columnName = "ss_store_sk_";
                 columnName = columnName.concat(Integer.toString(store));

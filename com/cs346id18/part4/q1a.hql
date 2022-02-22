@@ -1,7 +1,8 @@
-SELECT ss_store_sk, SUM(ss_net_paid) AS net_paid FROM store_sales
+SELECT CONCAT("ss_store_sk_", ss_store_sk) AS store, SUM(ss_net_paid) AS net_paid 
+FROM store_sales
 WHERE ss_sold_date_sk > 2451146 
     AND ss_sold_date_sk < 2452268 
-    AND isnotnull(ss_store_sk) 
+    AND ISNOTNULL(ss_store_sk) 
 GROUP BY ss_store_sk
 ORDER BY net_paid DESC;
 

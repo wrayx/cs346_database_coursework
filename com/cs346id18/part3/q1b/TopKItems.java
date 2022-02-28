@@ -114,12 +114,12 @@ public class TopKItems {
 
         // private DoubleWritable result = new DoubleWritable();
 
-        private TreeMap<Double, Integer> tmap2;
+        private TreeMap<Integer, Integer> tmap2;
         private int total_sold_quantity;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Double, Integer>(Comparator.reverseOrder());
+            tmap2 = new TreeMap<Integer, Integer>(Comparator.reverseOrder());
         }
 
         @Override
@@ -156,11 +156,11 @@ public class TopKItems {
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<Double, Integer> entry : tmap2.entrySet()) {
-                DecimalFormat df = new DecimalFormat("#.##");
-                total_sold_quantity = (double) entry.getKey();
+            for (Map.Entry<Integer, Integer> entry : tmap2.entrySet()) {
+                // DecimalFormat df = new DecimalFormat("#.##");
+                total_sold_quantity = entry.getKey();
                 int item_id = entry.getValue();
-                String totalNetProfit_str = String.valueOf(df.format(total_sold_quantity));
+                String totalNetProfit_str = String.valueOf(total_sold_quantity);
                 String columnName = "ss_item_sk_";
                 columnName = columnName.concat(Integer.toString(item_id));
 

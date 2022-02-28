@@ -9,5 +9,5 @@ else
     rm TopKItems.jar
     hadoop com.sun.tools.javac.Main com/cs346id18/part3/q1b/TopKItems.java
     jar -cf TopKItems.jar com/cs346id18/part3/q1b/TopKItems*.class
-    hadoop jar TopKItems.jar com.cs346id18.part3.q1b.TopKItems 10 2451392 2451894 input/1G/store_sales/store_sales.dat output/q1b
+    hadoop jar TopKItems.jar com.cs346id18.part3.q1b.TopKItems 5 2451146 2452268 input/1G/store_sales/store_sales.dat output/q1b
 fi

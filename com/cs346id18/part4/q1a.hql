@@ -4,7 +4,7 @@ WHERE ss_sold_date_sk > 2451146
     AND ss_sold_date_sk < 2452268 
     AND ISNOTNULL(ss_store_sk) 
 GROUP BY ss_store_sk
-ORDER BY net_paid DESC;
+ORDER BY net_paid DESC LIMIT 5;
 
 -- HIVE output:
 

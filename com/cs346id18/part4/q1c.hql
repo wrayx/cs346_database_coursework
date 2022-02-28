@@ -28,4 +28,13 @@ ORDER BY inc_tax DESC LIMIT 10;
 -- 10 rows selected (44.086 seconds)
 
 -- MapReduce output:
--- TBD
+-- ss_sold_data_sk_2451546 7269283.12
+-- ss_sold_data_sk_2451541 6176220.47
+-- ss_sold_data_sk_2451853 6142654.77
+-- ss_sold_data_sk_2451873 6011726.09
+-- ss_sold_data_sk_2451488 5946318.8
+-- ss_sold_data_sk_2451854 5859892.09
+-- ss_sold_data_sk_2451868 5843080.66
+-- ss_sold_data_sk_2451531 5794190.91
+-- ss_sold_data_sk_2451537 5783052.86
+-- ss_sold_data_sk_2451513 5761447.15

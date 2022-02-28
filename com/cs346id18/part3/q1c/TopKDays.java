@@ -108,12 +108,12 @@ public class TopKDays {
 
         // private DoubleWritable result = new DoubleWritable();
 
-        private TreeMap<Float, Long> tmap2;
-        private float total_net_paid_inc;
+        private TreeMap<Double, Long> tmap2;
+        private double total_net_paid_inc;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Float, Long>(Comparator.reverseOrder());
+            tmap2 = new TreeMap<Double, Long>(Comparator.reverseOrder());
         }
 
         @Override
@@ -137,7 +137,7 @@ public class TopKDays {
             for (FloatWritable value : values) {
                 // netProfit = value.get();
                 // divide by 1,000,000 other wise too big for storing as a long
-                total_net_paid_inc +=  value.get();
+                total_net_paid_inc +=  (double) value.get();
                 // totalNetProfit = long.valueOf(df.format(totalNetProfit));
             }
             tmap2.put(total_net_paid_inc, sold_date);
@@ -150,11 +150,11 @@ public class TopKDays {
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<Float, Long> entry : tmap2.entrySet()) {
-                // DecimalFormat df = new DecimalFormat("#.##");
+            for (Map.Entry<Double, Long> entry : tmap2.entrySet()) {
+                DecimalFormat df = new DecimalFormat("#.##");
                 total_net_paid_inc = entry.getKey();
                 long sold_date = entry.getValue();
-                String total_net_paid_inc_ss_str = String.valueOf(total_net_paid_inc);
+                String total_net_paid_inc_ss_str = String.valueOf(df.format(total_net_paid_inc));
                 String columnName = "ss_sold_data_sk_";
                 columnName = columnName.concat(Long.toString(sold_date));
 

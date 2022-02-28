@@ -3,16 +3,20 @@
 ## TODOs
 Part 3 Java Map-Reduce: 
 - [x] Query 1.a
-- [ ] Query 1.b
-- [ ] Query 1.c
+- [x] Query 1.b
+- [x] Query 1.c
 - [ ] Query 2 (Reduce Side Join)
 
 Part 4 Hive Query:
 - [x] Hive schema
-- [ ] Query 1.a
-- [ ] Query 1.b
-- [ ] Query 1.c
+- [x] Query 1.a
+- [x] Query 1.b
+- [x] Query 1.c
 - [ ] Query 2 (Reduce Side Join)
+
+Additionally:
+- [ ] Comment software code
+- [ ] EDA for csv files
 
 Report:
 - [ ] ..

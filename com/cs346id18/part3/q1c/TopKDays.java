@@ -2,8 +2,6 @@ package com.cs346id18.part3.q1c;
 
 // importing Libraries
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.Map;
@@ -12,10 +10,7 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.DoubleWritable;
-// import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -28,14 +23,6 @@ public class TopKDays {
     public static class TopKDaysMapper extends
             Mapper<LongWritable, Text, LongWritable, FloatWritable> {
 
-        // private TreeMap<Float, Integer> tmap;
-
-        // @Override
-        // public void setup(Context context) throws IOException,
-        //         InterruptedException {
-        //     tmap = new TreeMap<Float, Integer>((Comparator.reverseOrder()));
-        // }
-
         @Override
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException {
@@ -46,15 +33,9 @@ public class TopKDays {
             long end_date = Long.parseLong(conf.get("end_date"));
 
             String[] tokens = value.toString().split(Pattern.quote("|"), -1);
-            // for (String t: tokens){
-            // System.out.print(t);
-            // System.out.print("===");
-            // }
-            // System.out.println();
-            // long sold_date = Long.parseLong(tokens[0].trim());
             String sold_date_str = tokens[0];
-            String  net_paid_inc_str = tokens[21];
-            
+            String net_paid_inc_str = tokens[21];
+
             long sold_date;
             float net_paid_inc;
 
@@ -67,46 +48,23 @@ public class TopKDays {
             }
 
             try {
-                net_paid_inc= Float.parseFloat(net_paid_inc_str.trim());
+                net_paid_inc = Float.parseFloat(net_paid_inc_str.trim());
             } catch (NumberFormatException e) {
                 net_paid_inc = 0;
             }
-            
+
             // insert data into treeMap,
             // we want top K net profit entries
             // so we pass net_paid as key
             if (net_paid_inc != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
                 context.write(new LongWritable(sold_date), new FloatWritable(net_paid_inc));
             }
-            // remove the first key-value
-            // if it's size increases to K
-            // if (tmap.size() > k) {
-            //     tmap.remove(tmap.lastKey());
-            // }
-
-            // System.out.println("store = " + store);
-            // System.out.println("sold date = " + sold_date);
-            // System.out.println("net paid = " + net_paid);
 
         }
-
-        // @Override
-        // public void cleanup(Context context) throws IOException,
-        //         InterruptedException {
-        //     for (Map.Entry<Float, Integer> entry : tmap.entrySet()) {
-
-        //         float profit = entry.getKey();
-        //         int store = entry.getValue();
-
-        //         context.write(new IntWritable(store), new FloatWritable(profit));
-        //     }
-        // }
     }
 
     public static class TopKDaysReducer extends
             Reducer<LongWritable, FloatWritable, Text, Text> {
-
-        // private DoubleWritable result = new DoubleWritable();
 
         private TreeMap<Double, Long> tmap2;
         private double total_net_paid_inc;
@@ -123,22 +81,10 @@ public class TopKDays {
             Configuration conf = context.getConfiguration();
             int k = Integer.parseInt(conf.get("K"));
 
-            // System.out.println(key);
-            // for (DoubleWritable t : values) {
-            // System.out.print(t);
-            // System.out.print("===");
-            // }
-            // System.out.println();
-            // String store = key.toString();
             long sold_date = key.get();
-            // DecimalFormat df = new DecimalFormat("#.##");
-            // float netProfit = 0;
             total_net_paid_inc = 0;
             for (FloatWritable value : values) {
-                // netProfit = value.get();
-                // divide by 1,000,000 other wise too big for storing as a long
-                total_net_paid_inc +=  (double) value.get();
-                // totalNetProfit = long.valueOf(df.format(totalNetProfit));
+                total_net_paid_inc += (double) value.get();
             }
             tmap2.put(total_net_paid_inc, sold_date);
 

@@ -24,14 +24,6 @@ public class TopKNetProfit {
     public static class TopKNetProfitMapper extends
             Mapper<LongWritable, Text, IntWritable, FloatWritable> {
 
-        // private TreeMap<Float, Integer> tmap;
-
-        // @Override
-        // public void setup(Context context) throws IOException,
-        //         InterruptedException {
-        //     tmap = new TreeMap<Float, Integer>((Comparator.reverseOrder()));
-        // }
-
         @Override
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException {
@@ -42,12 +34,6 @@ public class TopKNetProfit {
             long end_date = Long.parseLong(conf.get("end_date"));
 
             String[] tokens = value.toString().split(Pattern.quote("|"), -1);
-            // for (String t: tokens){
-            // System.out.print(t);
-            // System.out.print("===");
-            // }
-            // System.out.println();
-            // long sold_date = Long.parseLong(tokens[0].trim());
             String sold_date_str = tokens[0];
             String store_str = tokens[7];
             String net_paid_str = tokens[20];
@@ -73,42 +59,19 @@ public class TopKNetProfit {
             } catch (NumberFormatException e) {
                 net_paid = 0;
             }
-            
+
             // insert data into treeMap,
             // we want top K net profit entries
             // so we pass net_paid as key
             if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
                 context.write(new IntWritable(store), new FloatWritable(net_paid));
             }
-            // remove the first key-value
-            // if it's size increases to K
-            // if (tmap.size() > k) {
-            //     tmap.remove(tmap.lastKey());
-            // }
-
-            // System.out.println("store = " + store);
-            // System.out.println("sold date = " + sold_date);
-            // System.out.println("net paid = " + net_paid);
 
         }
-
-        // @Override
-        // public void cleanup(Context context) throws IOException,
-        //         InterruptedException {
-        //     for (Map.Entry<Float, Integer> entry : tmap.entrySet()) {
-
-        //         float profit = entry.getKey();
-        //         int store = entry.getValue();
-
-        //         context.write(new IntWritable(store), new FloatWritable(profit));
-        //     }
-        // }
     }
 
     public static class TopKNetProfitReducer extends
             Reducer<IntWritable, FloatWritable, Text, Text> {
-
-        // private DoubleWritable result = new DoubleWritable();
 
         private TreeMap<Double, Integer> tmap2;
         private double totalNetProfit;
@@ -125,22 +88,10 @@ public class TopKNetProfit {
             Configuration conf = context.getConfiguration();
             int k = Integer.parseInt(conf.get("K"));
 
-            // System.out.println(key);
-            // for (DoubleWritable t : values) {
-            // System.out.print(t);
-            // System.out.print("===");
-            // }
-            // System.out.println();
-            // String store = key.toString();
             int store = key.get();
-            // DecimalFormat df = new DecimalFormat("#.##");
-            // float netProfit = 0;
             totalNetProfit = 0;
             for (FloatWritable value : values) {
-                // netProfit = value.get();
-                // divide by 1,000,000 other wise too big for storing as a long
                 totalNetProfit += (double) value.get();
-                // totalNetProfit = long.valueOf(df.format(totalNetProfit));
             }
             tmap2.put(totalNetProfit, store);
 

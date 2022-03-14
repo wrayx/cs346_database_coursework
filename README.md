@@ -17,6 +17,7 @@ Part 4 Hive Query:
 Additionally:
 - [ ] Comment software code
 - [ ] EDA for csv files
+- [ ] Performance analyses
 
 Report:
 - [ ] ..

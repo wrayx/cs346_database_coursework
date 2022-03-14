@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -24,7 +23,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class TopKFloorSpace {
     public static class StoreSalesDataMapper extends
-            Mapper<LongWritable, Text, IntWritable, Text> {
+            Mapper<LongWritable, Text, Text, Text> {
 
         @Override
         public void map(LongWritable key, Text value, Context context)
@@ -66,13 +65,13 @@ public class TopKFloorSpace {
             // we want top K net profit entries
             // so we pass net_paid as key
             if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
-                context.write(new IntWritable(store), new Text("np\t" + totalNetProfit_str));
+                context.write(new Text(store_str), new Text("np\t" + totalNetProfit_str));
             }
         }
     }
     
     public static class StoreDataMapper extends
-            Mapper<LongWritable, Text, IntWritable, Text> {
+            Mapper<LongWritable, Text, Text, Text> {
 
         // private TreeMap<Float, Integer> tmap;
 
@@ -106,46 +105,23 @@ public class TopKFloorSpace {
             }
             
             if (store != -1){
-                context.write(new IntWritable(store), new Text("fs\t" + floor_space_str));
+                context.write(new Text(store_str), new Text("fs\t" + floor_space_str));
             }
-
-            // try {
-            //     floor_space = Integer.parseInt(floor_space_str.trim());
-            // } catch (NumberFormatException e) {
-            //     floor_space = -1;
-            // }
-            
-            // insert data into treeMap,
-            // we want top K net profit entries
-            // so we pass net_paid as key
-            // if (store != -1 && floor_space != -1) {
-
-            //     context.write(new IntWritable(store), new FloatWritable(floor_space));
-            // }
-            // remove the first key-value
-            // if it's size increases to K
-            // if (tmap.size() > k) {
-            //     tmap.remove(tmap.lastKey());
-            // }
-
-            // System.out.println("store = " + store);
-            // System.out.println("sold date = " + sold_date);
-            // System.out.println("net paid = " + net_paid);
 
         }
     }
 
     public static class TopKFloorSpaceReducer extends
-            Reducer<IntWritable, Text, Text, Text> {
+            Reducer<Text, Text, Text, Text> {
 
         // private DoubleWritable result = new DoubleWritable();
 
-        private TreeMap<String, Integer> tmap2;
+        private TreeMap<String, String> tmap2;
         private float totalNetProfit;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<String, Integer>(new Comparator<String>() {
+            tmap2 = new TreeMap<String, String>(new Comparator<String>() {
                 @Override
                 public int compare(String e1, String e2) {
                         String [] inputs_e1 = e1.split("\t");
@@ -190,7 +166,7 @@ public class TopKFloorSpace {
         }
 
         // @Override
-        public void reduce(IntWritable key, Iterable<Text> values, Context context)
+        public void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
@@ -203,7 +179,7 @@ public class TopKFloorSpace {
             // }
             // System.out.println();
             // String store = key.toString();
-            int store = key.get();
+            String store = key.getData();
             // DecimalFormat df = new DecimalFormat("#.##");
             float totalNetProfit = 0;
             String floorspace = "";
@@ -230,12 +206,12 @@ public class TopKFloorSpace {
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<String, Integer> entry : tmap2.entrySet()) {
+            for (Map.Entry<String, String> entry : tmap2.entrySet()) {
                 // DecimalFormat df = new DecimalFormat("#.##");
                 String s = entry.getKey();
-                int store = entry.getValue();
+                String store = entry.getValue();
                 String columnName = "ss_store_sk_";
-                columnName = columnName.concat(Integer.toString(store));
+                columnName = columnName.concat(store);
 
                 context.write(new Text(columnName), new Text(s));
             }
@@ -266,11 +242,9 @@ public class TopKFloorSpace {
 
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKFloorSpace.class);
-        // job.setCombinerClass(TopKFloorSpaceReducer.class);
+        job.setCombinerClass(TopKFloorSpaceReducer.class);
         job.setReducerClass(TopKFloorSpaceReducer.class);
 
-        // job.setMapOutputKeyClass(IntWritable.class);
-        // job.setMapOutputValueClass(FloatWritable.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 

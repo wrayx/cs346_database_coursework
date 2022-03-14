@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -23,7 +24,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class TopKFloorSpace {
     public static class StoreSalesDataMapper extends
-            Mapper<LongWritable, Text, Text, Text> {
+            Mapper<LongWritable, Text, IntWritable, Text> {
 
         @Override
         public void map(LongWritable key, Text value, Context context)
@@ -65,13 +66,13 @@ public class TopKFloorSpace {
             // we want top K net profit entries
             // so we pass net_paid as key
             if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
-                context.write(new Text(store_str), new Text("np\t" + totalNetProfit_str));
+                context.write(new IntWritable(store), new Text("fs\t" + totalNetProfit_str));
             }
         }
     }
     
     public static class StoreDataMapper extends
-            Mapper<LongWritable, Text, Text, Text> {
+            Mapper<LongWritable, Text, IntWritable, Text> {
 
         // private TreeMap<Float, Integer> tmap;
 
@@ -105,68 +106,70 @@ public class TopKFloorSpace {
             }
             
             if (store != -1){
-                context.write(new Text(store_str), new Text("fs\t" + floor_space_str));
+                context.write(new IntWritable(store), new Text(floor_space_str + "\tnp"));
             }
 
         }
     }
 
     public static class TopKFloorSpaceReducer extends
-            Reducer<Text, Text, Text, Text> {
+            Reducer<IntWritable, Text, Text, Text> {
 
         // private DoubleWritable result = new DoubleWritable();
 
-        private TreeMap<String, String> tmap2;
+        private TreeMap<String, Integer> tmap2;
         private float totalNetProfit;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<String, String>(new Comparator<String>() {
-                @Override
-                public int compare(String e1, String e2) {
-                        String [] inputs_e1 = e1.split("\t");
-                        int floorspace_e1;
-                        float net_paid_e1;
+            tmap2 = new TreeMap<String, Integer>(
+                new Comparator<String>() {
+                    @Override
+                    public int compare(String e1, String e2) {
+                            String [] inputs_e1 = e1.split("\t");
+                            int floorspace_e1;
+                            float net_paid_e1;
+    
+                            try {
+                                floorspace_e1 = Integer.parseInt(inputs_e1[0].trim());
+                            } catch (NumberFormatException e) {
+                                floorspace_e1 = -1;
+                            }
+                            try {
+                                net_paid_e1 = Float.parseFloat(inputs_e1[1].trim());
+                            } catch (NumberFormatException e) {
+                                net_paid_e1 = -1;
+                            }
+                            
+                            String [] inputs_e2 = e2.split("\t");
+                            int floorspace_e2;
+                            float net_paid_e2;
+    
+                            try {
+                                floorspace_e2 = Integer.parseInt(inputs_e2[0].trim());
+                            } catch (NumberFormatException e) {
+                                floorspace_e2 = -1;
+                            }
+                            try {
+                                net_paid_e2 = Float.parseFloat(inputs_e2[1].trim());
+                            } catch (NumberFormatException e) {
+                                net_paid_e2 = -1;
+                            }
+                            
+                            if (floorspace_e1 == floorspace_e2){
+                                return (-1) * Float.compare(net_paid_e1, net_paid_e2);
+                            }
+                            else {
+                                return (-1) * Integer.compare(floorspace_e1, floorspace_e2);
+                            }
+                    }
+                });
 
-                        try {
-                            floorspace_e1 = Integer.parseInt(inputs_e1[0].trim());
-                        } catch (NumberFormatException e) {
-                            floorspace_e1 = -1;
-                        }
-                        try {
-                            net_paid_e1 = Float.parseFloat(inputs_e1[1].trim());
-                        } catch (NumberFormatException e) {
-                            net_paid_e1 = -1;
-                        }
-                        
-                        String [] inputs_e2 = e2.split("\t");
-                        int floorspace_e2;
-                        float net_paid_e2;
-
-                        try {
-                            floorspace_e2 = Integer.parseInt(inputs_e2[0].trim());
-                        } catch (NumberFormatException e) {
-                            floorspace_e2 = -1;
-                        }
-                        try {
-                            net_paid_e2 = Float.parseFloat(inputs_e2[1].trim());
-                        } catch (NumberFormatException e) {
-                            net_paid_e2 = -1;
-                        }
-                        
-                        if (floorspace_e1 == floorspace_e2){
-                            return Float.compare(net_paid_e1, net_paid_e2);
-                        }
-                        else {
-                            return Integer.compare(floorspace_e1, floorspace_e2);
-                        }
-                }
-            });
             
         }
 
         // @Override
-        public void reduce(Text key, Iterable<Text> values, Context context)
+        public void reduce(IntWritable key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
@@ -179,39 +182,48 @@ public class TopKFloorSpace {
             // }
             // System.out.println();
             // String store = key.toString();
-            String store = key.getData();
+            int store = key.get();
             // DecimalFormat df = new DecimalFormat("#.##");
-            float totalNetProfit = 0;
-            String floorspace = "";
+            double totalNetProfit = 0;
+            int floorspace = 0;
             for (Text value : values) {
                 String [] parts = value.toString().split("\t");
-                if (parts[0].equals("np")){
-                    totalNetProfit += Float.parseFloat(parts[1]);
+                if (parts[0].equals("fs")) {
+                    // floorspace += 0;
+                    totalNetProfit += Double.parseDouble(parts[1]);
+                    // totalNetProfit_str = Float.toString(totalNetProfit);
                 }
-                else if (parts[0].equals("fs")) {
-                    floorspace = parts[1];
+                else if (parts[1].equals("np")){
+                    floorspace += Integer.parseInt(parts[0]);
+                    // totalNetProfit += 0;
+                }
+                else {
+                    floorspace += Integer.parseInt(parts[0]);
+                    totalNetProfit += Double.parseDouble(parts[1]);
                 }
             }
+            DecimalFormat df = new DecimalFormat("#.##");
+            String totalNetProfit_str = String.valueOf(df.format(totalNetProfit));
 
-            String s =(new StringBuilder()).append(floorspace).append('\t').append(String.valueOf(totalNetProfit)).toString();  
+            String s =(new StringBuilder()).append(Integer.toString(floorspace)).append('\t').append(totalNetProfit_str).toString();  
 
 
             tmap2.put(s, store);
 
-            if (tmap2.size() > k) {
-                tmap2.remove(tmap2.lastKey());
-            }
+            // if (tmap2.size() > k) {
+            //     tmap2.remove(tmap2.lastKey());
+            // }
         }
 
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<String, String> entry : tmap2.entrySet()) {
+            for (Map.Entry<String, Integer> entry : tmap2.entrySet()) {
                 // DecimalFormat df = new DecimalFormat("#.##");
                 String s = entry.getKey();
-                String store = entry.getValue();
+                int store = entry.getValue();
                 String columnName = "ss_store_sk_";
-                columnName = columnName.concat(store);
+                columnName = columnName.concat(Integer.toString(store));
 
                 context.write(new Text(columnName), new Text(s));
             }
@@ -242,9 +254,11 @@ public class TopKFloorSpace {
 
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKFloorSpace.class);
-        job.setCombinerClass(TopKFloorSpaceReducer.class);
+        // job.setCombinerClass(TopKFloorSpaceReducer.class);
         job.setReducerClass(TopKFloorSpaceReducer.class);
 
+        job.setMapOutputKeyClass(IntWritable.class);
+        job.setMapOutputValueClass(Text.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 

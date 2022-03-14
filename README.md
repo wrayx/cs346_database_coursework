@@ -74,6 +74,20 @@ hdfs dfs -cat output/wclabsheet/part-r-00000
 
 # delete output
 hdfs dfs -rm -r output/*
+
+# query 2 mapreduce output 
+ss_store_sk_4   9341467 475400665.4
+ss_store_sk_10  9294113 476650853.94
+ss_store_sk_11  9294113 0
+ss_store_sk_5   9078805 0
+ss_store_sk_6   9026222 0
+ss_store_sk_7   8954883 479048569.12
+ss_store_sk_3   7557959 0
+ss_store_sk_8   6995995 479051954.37
+ss_store_sk_9   6995995 0
+ss_store_sk_2   5285950 477594514.78
+ss_store_sk_1   5250760 475457349.02
+ss_store_sk_12  5219562 0
 ```
 
 ## Hive commands
@@ -94,3 +108,4 @@ SELECT colour, MAX(height*width) AS area FROM rectangles10m GROUP BY colour;
 | red     | 99820077  |
 +---------+-----------+
 ```
+

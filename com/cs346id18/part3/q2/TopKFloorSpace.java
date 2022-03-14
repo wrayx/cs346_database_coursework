@@ -66,7 +66,7 @@ public class TopKFloorSpace {
             // we want top K net profit entries
             // so we pass net_paid as key
             if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
-                context.write(new IntWritable(store), new Text("fs\t" + totalNetProfit_str));
+                context.write(new IntWritable(store), new Text(totalNetProfit_str + "\tfs"));
             }
         }
     }
@@ -106,7 +106,7 @@ public class TopKFloorSpace {
             }
             
             if (store != -1){
-                context.write(new IntWritable(store), new Text(floor_space_str + "\tnp"));
+                context.write(new IntWritable(store), new Text("np\t" + floor_space_str));
             }
 
         }
@@ -131,14 +131,15 @@ public class TopKFloorSpace {
                             float net_paid_e1;
     
                             try {
-                                floorspace_e1 = Integer.parseInt(inputs_e1[0].trim());
-                            } catch (NumberFormatException e) {
-                                floorspace_e1 = -1;
-                            }
-                            try {
-                                net_paid_e1 = Float.parseFloat(inputs_e1[1].trim());
+                                net_paid_e1 = Float.parseFloat(inputs_e1[0].trim());
                             } catch (NumberFormatException e) {
                                 net_paid_e1 = -1;
+                            }
+
+                            try {
+                                floorspace_e1 = Integer.parseInt(inputs_e1[1].trim());
+                            } catch (NumberFormatException e) {
+                                floorspace_e1 = -1;
                             }
                             
                             String [] inputs_e2 = e2.split("\t");
@@ -146,14 +147,14 @@ public class TopKFloorSpace {
                             float net_paid_e2;
     
                             try {
-                                floorspace_e2 = Integer.parseInt(inputs_e2[0].trim());
-                            } catch (NumberFormatException e) {
-                                floorspace_e2 = -1;
-                            }
-                            try {
-                                net_paid_e2 = Float.parseFloat(inputs_e2[1].trim());
+                                net_paid_e2 = Float.parseFloat(inputs_e2[0].trim());
                             } catch (NumberFormatException e) {
                                 net_paid_e2 = -1;
+                            }
+                            try {
+                                floorspace_e2 = Integer.parseInt(inputs_e2[1].trim());
+                            } catch (NumberFormatException e) {
+                                floorspace_e2 = -1;
                             }
                             
                             if (floorspace_e1 == floorspace_e2){
@@ -175,37 +176,28 @@ public class TopKFloorSpace {
             Configuration conf = context.getConfiguration();
             int k = Integer.parseInt(conf.get("K"));
 
-            // System.out.println(key);
-            // for (DoubleWritable t : values) {
-            // System.out.print(t);
-            // System.out.print("===");
-            // }
-            // System.out.println();
-            // String store = key.toString();
             int store = key.get();
-            // DecimalFormat df = new DecimalFormat("#.##");
             double totalNetProfit = 0;
             int floorspace = 0;
             for (Text value : values) {
                 String [] parts = value.toString().split("\t");
-                if (parts[0].equals("fs")) {
-                    // floorspace += 0;
-                    totalNetProfit += Double.parseDouble(parts[1]);
-                    // totalNetProfit_str = Float.toString(totalNetProfit);
+                if (parts[0].equals("np")){
+                    floorspace += Integer.parseInt(parts[1]);
                 }
-                else if (parts[1].equals("np")){
-                    floorspace += Integer.parseInt(parts[0]);
-                    // totalNetProfit += 0;
+                else if (parts[1].equals("fs")) {
+                    totalNetProfit += Double.parseDouble(parts[0]);
                 }
                 else {
-                    floorspace += Integer.parseInt(parts[0]);
-                    totalNetProfit += Double.parseDouble(parts[1]);
+                    totalNetProfit += Double.parseDouble(parts[0]);
+                    floorspace += Integer.parseInt(parts[1]);
                 }
             }
             DecimalFormat df = new DecimalFormat("#.##");
+            df.setMinimumFractionDigits(2);
+            df.setMinimumIntegerDigits(9);  
             String totalNetProfit_str = String.valueOf(df.format(totalNetProfit));
 
-            String s =(new StringBuilder()).append(Integer.toString(floorspace)).append('\t').append(totalNetProfit_str).toString();  
+            String s =(new StringBuilder()).append(totalNetProfit_str).append('\t').append(Integer.toString(floorspace)).toString();  
 
 
             tmap2.put(s, store);

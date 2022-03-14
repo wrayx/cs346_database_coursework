@@ -76,18 +76,18 @@ hdfs dfs -cat output/wclabsheet/part-r-00000
 hdfs dfs -rm -r output/*
 
 # query 2 mapreduce output 
-ss_store_sk_4   9341467 475400665.4
-ss_store_sk_10  9294113 476650853.94
-ss_store_sk_11  9294113 0
-ss_store_sk_5   9078805 0
-ss_store_sk_6   9026222 0
-ss_store_sk_7   8954883 479048569.12
-ss_store_sk_3   7557959 0
-ss_store_sk_8   6995995 479051954.37
-ss_store_sk_9   6995995 0
-ss_store_sk_2   5285950 477594514.78
-ss_store_sk_1   5250760 475457349.02
-ss_store_sk_12  5219562 0
+ss_store_sk_4   475400665.40    9341467
+ss_store_sk_10  476650853.94    9294113
+ss_store_sk_11  000000000.00    9294113
+ss_store_sk_5   000000000.00    9078805
+ss_store_sk_6   000000000.00    9026222
+ss_store_sk_7   479048569.12    8954883
+ss_store_sk_3   000000000.00    7557959
+ss_store_sk_8   479051954.37    6995995
+ss_store_sk_9   000000000.00    6995995
+ss_store_sk_2   477594514.78    5285950
+ss_store_sk_1   475457349.02    5250760
+ss_store_sk_12  000000000.00    5219562
 ```
 
 ## Hive commands

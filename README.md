@@ -17,6 +17,7 @@ Part 4 Hive Query:
 Additionally:
 - [ ] Comment software code
 - [ ] EDA for csv files
+- [ ] Performance analyses
 
 Report:
 - [ ] ..
@@ -73,6 +74,20 @@ hdfs dfs -cat output/wclabsheet/part-r-00000
 
 # delete output
 hdfs dfs -rm -r output/*
+
+# query 2 mapreduce output 
+ss_store_sk_4   475400665.40    9341467
+ss_store_sk_10  476650853.94    9294113
+ss_store_sk_11  000000000.00    9294113
+ss_store_sk_5   000000000.00    9078805
+ss_store_sk_6   000000000.00    9026222
+ss_store_sk_7   479048569.12    8954883
+ss_store_sk_3   000000000.00    7557959
+ss_store_sk_8   479051954.37    6995995
+ss_store_sk_9   000000000.00    6995995
+ss_store_sk_2   477594514.78    5285950
+ss_store_sk_1   475457349.02    5250760
+ss_store_sk_12  000000000.00    5219562
 ```
 
 ## Hive commands
@@ -93,3 +108,4 @@ SELECT colour, MAX(height*width) AS area FROM rectangles10m GROUP BY colour;
 | red     | 99820077  |
 +---------+-----------+
 ```
+

@@ -24,15 +24,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class TopKFloorSpace {
     public static class StoreSalesDataMapper extends
-            Mapper<LongWritable, Text, IntWritable, FloatWritable> {
-
-        // private TreeMap<Float, Integer> tmap;
-
-        // @Override
-        // public void setup(Context context) throws IOException,
-        //         InterruptedException {
-        //     tmap = new TreeMap<Float, Integer>((Comparator.reverseOrder()));
-        // }
+            Mapper<LongWritable, Text, IntWritable, Text> {
 
         @Override
         public void map(LongWritable key, Text value, Context context)
@@ -44,15 +36,9 @@ public class TopKFloorSpace {
             long end_date = Long.parseLong(conf.get("end_date"));
 
             String[] tokens = value.toString().split(Pattern.quote("|"), -1);
-            // for (String t: tokens){
-            // System.out.print(t);
-            // System.out.print("===");
-            // }
-            // System.out.println();
-            // long sold_date = Long.parseLong(tokens[0].trim());
             String sold_date_str = tokens[0];
             String store_str = tokens[7];
-            String net_paid_str = tokens[20];
+            String totalNetProfit_str = tokens[20];
             long sold_date;
             float net_paid;
             int store;
@@ -71,7 +57,7 @@ public class TopKFloorSpace {
             }
 
             try {
-                net_paid = Float.parseFloat(net_paid_str.trim());
+                net_paid = Float.parseFloat(totalNetProfit_str.trim());
             } catch (NumberFormatException e) {
                 net_paid = 0;
             }
@@ -80,35 +66,13 @@ public class TopKFloorSpace {
             // we want top K net profit entries
             // so we pass net_paid as key
             if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
-                context.write(new IntWritable(store), new FloatWritable(net_paid));
+                context.write(new IntWritable(store), new Text(totalNetProfit_str + "\tfs"));
             }
-            // remove the first key-value
-            // if it's size increases to K
-            // if (tmap.size() > k) {
-            //     tmap.remove(tmap.lastKey());
-            // }
-
-            // System.out.println("store = " + store);
-            // System.out.println("sold date = " + sold_date);
-            // System.out.println("net paid = " + net_paid);
-
         }
-
-        // @Override
-        // public void cleanup(Context context) throws IOException,
-        //         InterruptedException {
-        //     for (Map.Entry<Float, Integer> entry : tmap.entrySet()) {
-
-        //         float profit = entry.getKey();
-        //         int store = entry.getValue();
-
-        //         context.write(new IntWritable(store), new FloatWritable(profit));
-        //     }
-        // }
     }
     
     public static class StoreDataMapper extends
-            Mapper<LongWritable, Text, IntWritable, FloatWritable> {
+            Mapper<LongWritable, Text, IntWritable, Text> {
 
         // private TreeMap<Float, Integer> tmap;
 
@@ -122,11 +86,6 @@ public class TopKFloorSpace {
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException {
 
-            Configuration conf = context.getConfiguration();
-            // we will use the value passed in start date and end date at runtime
-            long start_date = Long.parseLong(conf.get("start_date"));
-            long end_date = Long.parseLong(conf.get("end_date"));
-
             String[] tokens = value.toString().split(Pattern.quote("|"), -1);
             // for (String t: tokens){
             // System.out.print(t);
@@ -134,12 +93,10 @@ public class TopKFloorSpace {
             // }
             // System.out.println();
             // long sold_date = Long.parseLong(tokens[0].trim());
-            String sold_date_str = tokens[0];
-            String store_str = tokens[7];
-            String net_paid_str = tokens[20];
-            long sold_date;
-            float net_paid;
+            String store_str = tokens[0];
+            String floor_space_str = tokens[7];
             int store;
+            // int floor_space;
 
             // check if the cell is empty
             try {
@@ -147,114 +104,129 @@ public class TopKFloorSpace {
             } catch (NumberFormatException e) {
                 store = -1;
             }
-
-            try {
-                sold_date = Long.parseLong(sold_date_str.trim());
-            } catch (NumberFormatException e) {
-                sold_date = 0;
-            }
-
-            try {
-                net_paid = Float.parseFloat(net_paid_str.trim());
-            } catch (NumberFormatException e) {
-                net_paid = 0;
-            }
             
-            // insert data into treeMap,
-            // we want top K net profit entries
-            // so we pass net_paid as key
-            if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
-                context.write(new IntWritable(store), new FloatWritable(net_paid));
+            if (store != -1){
+                context.write(new IntWritable(store), new Text("np\t" + floor_space_str));
             }
-            // remove the first key-value
-            // if it's size increases to K
-            // if (tmap.size() > k) {
-            //     tmap.remove(tmap.lastKey());
-            // }
-
-            // System.out.println("store = " + store);
-            // System.out.println("sold date = " + sold_date);
-            // System.out.println("net paid = " + net_paid);
 
         }
-
-        // @Override
-        // public void cleanup(Context context) throws IOException,
-        //         InterruptedException {
-        //     for (Map.Entry<Float, Integer> entry : tmap.entrySet()) {
-
-        //         float profit = entry.getKey();
-        //         int store = entry.getValue();
-
-        //         context.write(new IntWritable(store), new FloatWritable(profit));
-        //     }
-        // }
     }
 
     public static class TopKFloorSpaceReducer extends
-            Reducer<IntWritable, FloatWritable, Text, Text> {
+            Reducer<IntWritable, Text, Text, Text> {
 
         // private DoubleWritable result = new DoubleWritable();
 
-        private TreeMap<Double, Integer> tmap2;
-        private double totalNetProfit;
+        private TreeMap<String, Integer> tmap2;
+        private float totalNetProfit;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Double, Integer>(Comparator.reverseOrder());
+            tmap2 = new TreeMap<String, Integer>(
+                new Comparator<String>() {
+                    @Override
+                    public int compare(String e1, String e2) {
+                            String [] inputs_e1 = e1.split("\t");
+                            int floorspace_e1;
+                            float net_paid_e1;
+    
+                            try {
+                                net_paid_e1 = Float.parseFloat(inputs_e1[0].trim());
+                            } catch (NumberFormatException e) {
+                                net_paid_e1 = -1;
+                            }
+
+                            try {
+                                floorspace_e1 = Integer.parseInt(inputs_e1[1].trim());
+                            } catch (NumberFormatException e) {
+                                floorspace_e1 = -1;
+                            }
+                            
+                            String [] inputs_e2 = e2.split("\t");
+                            int floorspace_e2;
+                            float net_paid_e2;
+    
+                            try {
+                                net_paid_e2 = Float.parseFloat(inputs_e2[0].trim());
+                            } catch (NumberFormatException e) {
+                                net_paid_e2 = -1;
+                            }
+                            try {
+                                floorspace_e2 = Integer.parseInt(inputs_e2[1].trim());
+                            } catch (NumberFormatException e) {
+                                floorspace_e2 = -1;
+                            }
+                            
+                            if (floorspace_e1 == floorspace_e2){
+                                return (-1) * Float.compare(net_paid_e1, net_paid_e2);
+                            }
+                            else {
+                                return (-1) * Integer.compare(floorspace_e1, floorspace_e2);
+                            }
+                    }
+                });
+
+            
         }
 
-        @Override
-        public void reduce(IntWritable key, Iterable<FloatWritable> values, Context context)
+        // @Override
+        public void reduce(IntWritable key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
             int k = Integer.parseInt(conf.get("K"));
 
-            // System.out.println(key);
-            // for (DoubleWritable t : values) {
-            // System.out.print(t);
-            // System.out.print("===");
-            // }
-            // System.out.println();
-            // String store = key.toString();
             int store = key.get();
-            // DecimalFormat df = new DecimalFormat("#.##");
-            // float netProfit = 0;
-            totalNetProfit = 0;
-            for (FloatWritable value : values) {
-                // netProfit = value.get();
-                // divide by 1,000,000 other wise too big for storing as a long
-                totalNetProfit += (double) value.get();
-                // totalNetProfit = long.valueOf(df.format(totalNetProfit));
+            double totalNetProfit = 0;
+            int floorspace = 0;
+            for (Text value : values) {
+                String [] parts = value.toString().split("\t");
+                if (parts[0].equals("np")){
+                    floorspace += Integer.parseInt(parts[1]);
+                }
+                else if (parts[1].equals("fs")) {
+                    totalNetProfit += Double.parseDouble(parts[0]);
+                }
+                else {
+                    totalNetProfit += Double.parseDouble(parts[0]);
+                    floorspace += Integer.parseInt(parts[1]);
+                }
             }
-            tmap2.put(totalNetProfit, store);
+            DecimalFormat df = new DecimalFormat("#.##");
+            df.setMinimumFractionDigits(2);
+            df.setMinimumIntegerDigits(9);  
+            String totalNetProfit_str = String.valueOf(df.format(totalNetProfit));
 
-            if (tmap2.size() > k) {
-                tmap2.remove(tmap2.lastKey());
-            }
+            String s =(new StringBuilder()).append(totalNetProfit_str).append('\t').append(Integer.toString(floorspace)).toString();  
+
+
+            tmap2.put(s, store);
+
+            // if (tmap2.size() > k) {
+            //     tmap2.remove(tmap2.lastKey());
+            // }
         }
 
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<Double, Integer> entry : tmap2.entrySet()) {
-                DecimalFormat df = new DecimalFormat("#.##");
-                totalNetProfit = (double) entry.getKey();
+            for (Map.Entry<String, Integer> entry : tmap2.entrySet()) {
+                // DecimalFormat df = new DecimalFormat("#.##");
+                String s = entry.getKey();
                 int store = entry.getValue();
-                String totalNetProfit_str = String.valueOf(df.format(totalNetProfit));
                 String columnName = "ss_store_sk_";
                 columnName = columnName.concat(Integer.toString(store));
 
-                context.write(new Text(columnName), new Text(totalNetProfit_str));
+                context.write(new Text(columnName), new Text(s));
             }
+
         }
 
     }
 
     public static void main(String[] args) throws Exception {
 
-        if (args.length != 5) {
+        if (args.length != 6) {
             System.err.println(
                     "Usage: Top Net Profit <K> <start_date> <end_date> <input_file_1> <input_file_2> <output_path>");
             System.exit(-1);
@@ -274,11 +246,11 @@ public class TopKFloorSpace {
 
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKFloorSpace.class);
-        // job.setMapperClass(TopKFloorSpaceMapper.class);
+        // job.setCombinerClass(TopKFloorSpaceReducer.class);
         job.setReducerClass(TopKFloorSpaceReducer.class);
 
         job.setMapOutputKeyClass(IntWritable.class);
-        job.setMapOutputValueClass(FloatWritable.class);
+        job.setMapOutputValueClass(Text.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 

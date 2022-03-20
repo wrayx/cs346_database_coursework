@@ -1,3 +1,4 @@
+#!/bin/sh
 if [[ $1 == "a" ]]; then
     if [[ $2 == "rm" ]]; then
         hdfs dfs -rm -r output/q1a

@@ -1,5 +1,4 @@
 CREATE EXTERNAL TABLE IF NOT EXISTS store(
-    s_store_sk INT,
     s_store_id CHAR(16), 
     s_rec_start_date DATE, 
     s_rec_end_date DATE, 
@@ -29,9 +28,11 @@ CREATE EXTERNAL TABLE IF NOT EXISTS store(
     s_gmt_offset DECIMAL(5,2), 
     s_tax_percentage DECIMAL(5,2), 
     PRIMARY KEY(s_store_sk) DISABLE)
+PARTITIONED BY(s_store_sk INT)
 ROW FORMAT DELIMITED 
 FIELDS TERMINATED BY '|'
 LOCATION '/user/cs346id18/input/1G/store/';
+
 
 CREATE EXTERNAL TABLE IF NOT EXISTS store_sales(
     ss_sold_date_sk INT, 
@@ -41,7 +42,6 @@ CREATE EXTERNAL TABLE IF NOT EXISTS store_sales(
     ss_cdemo_sk INT, 
     ss_hdemo_sk INT, 
     ss_addr_sk INT, 
-    ss_store_sk INT, 
     ss_promo_sk INT, 
     ss_ticket_number INT, 
     ss_quantity INT, 
@@ -59,6 +59,8 @@ CREATE EXTERNAL TABLE IF NOT EXISTS store_sales(
     ss_net_profit DECIMAL(7,2),
     PRIMARY KEY(ss_item_sk, ss_ticket_number) DISABLE,
     CONSTRAINT c1 FOREIGN KEY (ss_store_sk) REFERENCES store(s_store_sk) DISABLE)
+PARTITIONED BY(ss_store_sk INT)
 ROW FORMAT DELIMITED 
 FIELDS TERMINATED BY '|'
-LOCATION '/user/cs346id18/input/40G/store_sales';
+LOCATION '/user/cs346id18/input/1G/store_sales';
+

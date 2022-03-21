@@ -29,10 +29,11 @@ public class TopKNetProfit {
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
-            // we will use the value passed in start date and end date at runtime
+            /** Get start_date and end_date values passed from command lines at runtime */
             long start_date = Long.parseLong(conf.get("start_date"));
             long end_date = Long.parseLong(conf.get("end_date"));
 
+            /** Get data values from the .dat file */
             String[] tokens = value.toString().split(Pattern.quote("|"), -1);
             String sold_date_str = tokens[0];
             String store_str = tokens[7];
@@ -41,7 +42,7 @@ public class TopKNetProfit {
             float net_paid;
             int store;
 
-            // check if the cell is empty
+            /** check if each cell is empty */
             try {
                 store = Integer.parseInt(store_str.trim());
             } catch (NumberFormatException e) {
@@ -60,9 +61,9 @@ public class TopKNetProfit {
                 net_paid = 0;
             }
 
-            // insert data into treeMap,
-            // we want top K net profit entries
-            // so we pass net_paid as key
+            /** insert data into treeMap,
+                we want top K net profit entries
+                so we pass net_paid as key */
             if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
                 context.write(new IntWritable(store), new FloatWritable(net_paid));
             }
@@ -72,13 +73,15 @@ public class TopKNetProfit {
 
     public static class TopKNetProfitReducer extends
             Reducer<IntWritable, FloatWritable, Text, Text> {
-
-        private TreeMap<Double, Integer> tmap2;
+        
+        /** TreeMap for sorting the total net profit in descending order */
+        private TreeMap<Double, Integer> tmap;
+        /** variable for storing the total net profit value */
         private double totalNetProfit;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Double, Integer>(Comparator.reverseOrder());
+            tmap = new TreeMap<Double, Integer>(Comparator.reverseOrder());
         }
 
         @Override
@@ -93,17 +96,17 @@ public class TopKNetProfit {
             for (FloatWritable value : values) {
                 totalNetProfit += (double) value.get();
             }
-            tmap2.put(totalNetProfit, store);
+            tmap.put(totalNetProfit, store);
 
-            if (tmap2.size() > k) {
-                tmap2.remove(tmap2.lastKey());
+            if (tmap.size() > k) {
+                tmap.remove(tmap.lastKey());
             }
         }
 
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<Double, Integer> entry : tmap2.entrySet()) {
+            for (Map.Entry<Double, Integer> entry : tmap.entrySet()) {
                 DecimalFormat df = new DecimalFormat("#.##");
                 totalNetProfit = (double) entry.getKey();
                 int store = entry.getValue();

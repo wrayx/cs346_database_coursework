@@ -202,9 +202,9 @@ public class TopKFloorSpace {
 
             tmap2.put(s, store);
 
-            // if (tmap2.size() > k) {
-            //     tmap2.remove(tmap2.lastKey());
-            // }
+            if (tmap2.size() > k) {
+                tmap2.remove(tmap2.lastKey());
+            }
         }
 
         public void cleanup(Context context) throws IOException,

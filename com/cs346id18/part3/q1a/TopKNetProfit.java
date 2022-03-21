@@ -139,7 +139,6 @@ public class TopKNetProfit {
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKNetProfit.class);
         job.setMapperClass(TopKNetProfitMapper.class);
-        job.setCombinerClass(TopKNetProfitReducer.class);
         job.setReducerClass(TopKNetProfitReducer.class);
 
         job.setMapOutputKeyClass(IntWritable.class);

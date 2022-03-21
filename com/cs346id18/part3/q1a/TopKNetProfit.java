@@ -122,38 +122,38 @@ public class TopKNetProfit {
     }
 
 
-    public static class TopKNetProfitPartitioner extends Partitioner <IntWritable, FloatWritable>{
-        @Override
-        public int getPartition(IntWritable key, FloatWritable value, int numReduceTasks)
-        {
-            String[] tokens = value.toString().split(Pattern.quote("|"), -1);
-            String sold_date_str = tokens[0];
-            long sold_date = 0;
-            try {
-                sold_date = Long.parseLong(sold_date_str.trim());
-            } catch (NumberFormatException e) {
-                sold_date = 0;
-            }
+    // public static class TopKNetProfitPartitioner extends Partitioner <IntWritable, FloatWritable>{
+    //     @Override
+    //     public int getPartition(IntWritable key, FloatWritable value, int numReduceTasks)
+    //     {
+    //         String[] tokens = value.toString().split(Pattern.quote("|"), -1);
+    //         String sold_date_str = tokens[0];
+    //         long sold_date = 0;
+    //         try {
+    //             sold_date = Long.parseLong(sold_date_str.trim());
+    //         } catch (NumberFormatException e) {
+    //             sold_date = 0;
+    //         }
 
-            if(numReduceTasks == 0)
-            {
-                return 0;
-            }
+    //         if(numReduceTasks == 0)
+    //         {
+    //             return 0;
+    //         }
             
-            if(sold_date<2451146)
-            {
-                return 0;
-            }
-            else if(sold_date>=2451146 && sold_date <= 2452268)
-            {
-                return 1 % numReduceTasks;
-            }
-            else
-            {
-                return 2 % numReduceTasks;
-            }
-        }
-    }
+    //         if(sold_date<2451146)
+    //         {
+    //             return 0;
+    //         }
+    //         else if(sold_date>=2451146 && sold_date <= 2452268)
+    //         {
+    //             return 1 % numReduceTasks;
+    //         }
+    //         else
+    //         {
+    //             return 2 % numReduceTasks;
+    //         }
+    //     }
+    // }
 
     public static void main(String[] args) throws Exception {
 
@@ -177,9 +177,10 @@ public class TopKNetProfit {
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKNetProfit.class);
         job.setMapperClass(TopKNetProfitMapper.class);
-        job.setPartitionerClass(TopKNetProfitPartitioner.class);
+        // job.setPartitionerClass(TopKNetProfitPartitioner.class);
+        job.setCombinerClass(TopKNetProfitReducer.class);
         job.setReducerClass(TopKNetProfitReducer.class);
-        job.setNumReduceTasks(3);
+        // job.setNumReduceTasks(3);
         job.setMapOutputKeyClass(IntWritable.class);
         job.setMapOutputValueClass(FloatWritable.class);
         job.setOutputKeyClass(Text.class);

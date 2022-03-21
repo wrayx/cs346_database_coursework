@@ -10,21 +10,19 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class TopKFloorSpace {
     public static class StoreSalesDataMapper extends
-            Mapper<LongWritable, Text, IntWritable, Text> {
+            Mapper<LongWritable, Text, Text, Text> {
 
         @Override
         public void map(LongWritable key, Text value, Context context)
@@ -66,13 +64,14 @@ public class TopKFloorSpace {
             // we want top K net profit entries
             // so we pass net_paid as key
             if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
-                context.write(new IntWritable(store), new Text(totalNetProfit_str + "\tfs"));
+                String columnName = "ss_store_sk_";
+                context.write(new Text(columnName.concat(store_str)), new Text(totalNetProfit_str + "\tfs"));
             }
         }
     }
     
     public static class StoreDataMapper extends
-            Mapper<LongWritable, Text, IntWritable, Text> {
+            Mapper<LongWritable, Text, Text, Text> {
 
         // private TreeMap<Float, Integer> tmap;
 
@@ -106,23 +105,54 @@ public class TopKFloorSpace {
             }
             
             if (store != -1){
-                context.write(new IntWritable(store), new Text("np\t" + floor_space_str));
+                String columnName = "ss_store_sk_";
+                context.write(new Text(columnName.concat(store_str)), new Text("np\t" + floor_space_str));
             }
 
         }
     }
 
+    public static class TopKFloorSpaceCombiner extends
+            Reducer<Text, Text, Text, Text> {
+
+        public void reduce(Text key, Iterable<Text> values, Context context)
+                throws IOException, InterruptedException {
+
+            double totalNetProfit = 0;
+            int floorspace = 0;
+            for (Text value : values) {
+                String [] parts = value.toString().split("\t");
+                if (parts[0].equals("np")){
+                    floorspace += Integer.parseInt(parts[1]);
+                    totalNetProfit += 0;
+                }
+                else if (parts[1].equals("fs")) {
+                    totalNetProfit += Double.parseDouble(parts[0]);
+                    floorspace += 0;
+                }
+                else {
+                    totalNetProfit += Double.parseDouble(parts[0]);
+                    floorspace += Integer.parseInt(parts[1]);
+                }
+            }
+
+            String totalNetProfit_str = String.valueOf(totalNetProfit);
+
+            String s =(new StringBuilder()).append(totalNetProfit_str).append('\t').append(Integer.toString(floorspace)).toString();  
+
+            context.write(key, new Text(s));
+        }
+    }
+
+
     public static class TopKFloorSpaceReducer extends
-            Reducer<IntWritable, Text, Text, Text> {
+            Reducer<Text, Text, Text, Text> {
 
-        // private DoubleWritable result = new DoubleWritable();
-
-        private TreeMap<String, Integer> tmap2;
-        private float totalNetProfit;
+        private TreeMap<String, String> tmap2;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<String, Integer>(
+            tmap2 = new TreeMap<String, String>(
                 new Comparator<String>() {
                     @Override
                     public int compare(String e1, String e2) {
@@ -170,22 +200,24 @@ public class TopKFloorSpace {
         }
 
         // @Override
-        public void reduce(IntWritable key, Iterable<Text> values, Context context)
+        public void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
             int k = Integer.parseInt(conf.get("K"));
 
-            int store = key.get();
+            // String store = key.;
             double totalNetProfit = 0;
             int floorspace = 0;
             for (Text value : values) {
                 String [] parts = value.toString().split("\t");
                 if (parts[0].equals("np")){
                     floorspace += Integer.parseInt(parts[1]);
+                    totalNetProfit += 0;
                 }
                 else if (parts[1].equals("fs")) {
                     totalNetProfit += Double.parseDouble(parts[0]);
+                    floorspace += 0;
                 }
                 else {
                     totalNetProfit += Double.parseDouble(parts[0]);
@@ -200,7 +232,7 @@ public class TopKFloorSpace {
             String s =(new StringBuilder()).append(totalNetProfit_str).append('\t').append(Integer.toString(floorspace)).toString();  
 
 
-            tmap2.put(s, store);
+            tmap2.put(s, key.toString());
 
             if (tmap2.size() > k) {
                 tmap2.remove(tmap2.lastKey());
@@ -210,14 +242,14 @@ public class TopKFloorSpace {
         public void cleanup(Context context) throws IOException,
                 InterruptedException {
 
-            for (Map.Entry<String, Integer> entry : tmap2.entrySet()) {
+            for (Map.Entry<String, String> entry : tmap2.entrySet()) {
                 // DecimalFormat df = new DecimalFormat("#.##");
                 String s = entry.getKey();
-                int store = entry.getValue();
-                String columnName = "ss_store_sk_";
-                columnName = columnName.concat(Integer.toString(store));
+                String store = entry.getValue();
+                // String columnName = "ss_store_sk_";
+                // columnName = columnName.concat(store);
 
-                context.write(new Text(columnName), new Text(s));
+                context.write(new Text(store), new Text(s));
             }
 
         }
@@ -246,10 +278,10 @@ public class TopKFloorSpace {
 
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKFloorSpace.class);
-        // job.setCombinerClass(TopKFloorSpaceReducer.class);
+        job.setCombinerClass(TopKFloorSpaceCombiner.class);
         job.setReducerClass(TopKFloorSpaceReducer.class);
 
-        job.setMapOutputKeyClass(IntWritable.class);
+        job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);

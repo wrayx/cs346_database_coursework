@@ -10,8 +10,8 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -23,7 +23,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class TopKNetProfit {
     public static class TopKNetProfitMapper extends
-            Mapper<LongWritable, Text, IntWritable, FloatWritable> {
+            Mapper<LongWritable, Text, IntWritable, DoubleWritable> {
 
         @Override
         public void map(LongWritable key, Text value, Context context)
@@ -40,7 +40,7 @@ public class TopKNetProfit {
             String store_str = tokens[7];
             String net_paid_str = tokens[20];
             long sold_date;
-            float net_paid;
+            double net_paid;
             int store;
 
             /** check if each cell is empty */
@@ -66,14 +66,28 @@ public class TopKNetProfit {
                 we want top K net profit entries
                 so we pass net_paid as key */
             if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
-                context.write(new IntWritable(store), new FloatWritable(net_paid));
+                context.write(new IntWritable(store), new DoubleWritable(net_paid));
             }
 
         }
     }
+    public static class TopKNetProfitCombiner extends 
+            Reducer<IntWritable, DoubleWritable, IntWritable, DoubleWritable> {
 
+        private double totalNetProfit;
+
+        public void reduce( IntWritable key, Iterable<DoubleWritable> values, Context context)
+        throws IOException, InterruptedException {
+            int store = key.get();
+            totalNetProfit = 0;
+            for (DoubleWritable value : values) {
+                totalNetProfit += value.get();
+            }
+            context.write(new IntWritable(store), new DoubleWritable(totalNetProfit));
+        }
+    }
     public static class TopKNetProfitReducer extends
-            Reducer<IntWritable, FloatWritable, Text, Text> {
+            Reducer<IntWritable, DoubleWritable, Text, Text> {
         
         /** TreeMap for sorting the total net profit in descending order */
         private TreeMap<Double, Integer> tmap;
@@ -86,7 +100,7 @@ public class TopKNetProfit {
         }
 
         @Override
-        public void reduce(IntWritable key, Iterable<FloatWritable> values, Context context)
+        public void reduce(IntWritable key, Iterable<DoubleWritable> values, Context context)
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
@@ -94,8 +108,8 @@ public class TopKNetProfit {
 
             int store = key.get();
             totalNetProfit = 0;
-            for (FloatWritable value : values) {
-                totalNetProfit += (double) value.get();
+            for (DoubleWritable value : values) {
+                totalNetProfit += value.get();
             }
             tmap.put(totalNetProfit, store);
 
@@ -178,11 +192,11 @@ public class TopKNetProfit {
         job.setJarByClass(TopKNetProfit.class);
         job.setMapperClass(TopKNetProfitMapper.class);
         // job.setPartitionerClass(TopKNetProfitPartitioner.class);
-        job.setCombinerClass(TopKNetProfitReducer.class);
+        job.setCombinerClass(TopKNetProfitCombiner.class);
         job.setReducerClass(TopKNetProfitReducer.class);
         // job.setNumReduceTasks(3);
         job.setMapOutputKeyClass(IntWritable.class);
-        job.setMapOutputValueClass(FloatWritable.class);
+        job.setMapOutputValueClass(DoubleWritable.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 

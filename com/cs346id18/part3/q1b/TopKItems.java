@@ -70,7 +70,7 @@ public class TopKItems {
 
         }
     }
-    //combiner phase, sum up the net paid of each row of each map task
+    /**combiner phase, sum up the net paid of each row of each map task*/
     public static class TopKItemsCombiner extends 
             Reducer<IntWritable, DoubleWritable, IntWritable, DoubleWritable> {
 
@@ -86,7 +86,7 @@ public class TopKItems {
             context.write(new IntWritable(store), new DoubleWritable(total_quantity));
         }
     }
-    //reducer phase,using tree map to sort the data
+    /**reducer phase,using tree map to sort the data*/
     public static class TopKItemsReducer extends
             Reducer<IntWritable, DoubleWritable, Text, Text> {
 
@@ -142,7 +142,7 @@ public class TopKItems {
                     "Usage: Top Net Profit <K> <start_date> <end_date> <input_file> <output_path>");
             System.exit(-1);
         }
-
+        //get parameters
         String k = args[0];
         String start_date = args[1];
         String end_date = args[2];
@@ -153,7 +153,7 @@ public class TopKItems {
         conf.set("K", k);
         conf.set("start_date", start_date);
         conf.set("end_date", end_date);
-
+        //set job
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKItems.class);
         job.setMapperClass(TopKItemsMapper.class);

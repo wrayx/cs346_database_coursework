@@ -144,7 +144,7 @@ public class TopKNetProfit {
                     "Usage: Top Net Profit <K> <start_date> <end_date> <input_file> <output_path>");
             System.exit(-1);
         }
-
+        //get parameters
         String k = args[0];
         String start_date = args[1];
         String end_date = args[2];
@@ -155,12 +155,13 @@ public class TopKNetProfit {
         conf.set("K", k);
         conf.set("start_date", start_date);
         conf.set("end_date", end_date);
-
+        //set job
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKNetProfit.class);
         job.setMapperClass(TopKNetProfitMapper.class);
         job.setCombinerClass(TopKNetProfitCombiner.class);
         job.setReducerClass(TopKNetProfitReducer.class);
+
         job.setMapOutputKeyClass(IntWritable.class);
         job.setMapOutputValueClass(DoubleWritable.class);
         job.setOutputKeyClass(Text.class);

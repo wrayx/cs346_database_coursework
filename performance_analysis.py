@@ -18,8 +18,9 @@ with open('test_output_mapreduce.txt', 'w') as f:
     process.wait()
     f.close()
 
+output = ["", "", "", "", "", ""]
+
 with open('test_output_mapreduce.txt', 'r') as f:
-    output = ["", "", "", "", "", ""]
 
     # Loop through the file line by line
     for line in f:
@@ -42,5 +43,10 @@ with open('test_output_mapreduce.txt', 'r') as f:
         elif "bytes written=" in line:
             # print(line.lstrip(), end = '')
             output[5] = line.strip()
+output_str = "\n{str}\n".format(str='\n'.join(output))
+print(output_str)
 
-    print("\n{str}\n".format(str='\n'.join(output)))
+with open('performance_summary.txt', 'a') as f:
+    f.write("\ntask_{}".format(sys.argv[1]))
+    f.write(output_str)
+    f.close()

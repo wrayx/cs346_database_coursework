@@ -1,0 +1,16 @@
+
+task_b
+CPU time spent (secs)=781.93
+map tasks (secs)=2143.986
+reduce tasks (secs)=374.607
+Virtual memory (bytes) snapshot=320790593536
+HDFS: Number of bytes read=16045130626
+HDFS: Number of bytes written=116
+
+task_2
+CPU time spent (secs)=794.66
+map tasks (secs)=2123.886
+reduce tasks (secs)=369.627
+Virtual memory (bytes) snapshot=323586371584
+HDFS: Number of bytes read=16045180848
+HDFS: Number of bytes written=365

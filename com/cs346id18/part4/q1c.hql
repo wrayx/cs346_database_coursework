@@ -1,8 +1,8 @@
 SELECT CONCAT("ss_sold_date_sk", ss_sold_date_sk) AS sold_date, 
 SUM(ss_net_paid_inc_tax) AS inc_tax 
 FROM store_sales
-WHERE ss_sold_date_sk > 2451392 
-    AND ss_sold_date_sk < 2451894 
+WHERE ss_sold_date_sk >= 2451392 
+    AND ss_sold_date_sk <= 2451894 
     AND ISNOTNULL(ss_sold_date_sk) 
 GROUP BY ss_sold_date_sk
 ORDER BY inc_tax DESC LIMIT 10;

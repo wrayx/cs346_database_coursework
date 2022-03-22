@@ -1,8 +1,8 @@
 SELECT CONCAT("ss_item_sk_", ss_item_sk) AS item, 
 SUM(ss_quantity) AS quantity 
 FROM store_sales_bucketed
-WHERE ss_sold_date_sk > 2451146 
-    AND ss_sold_date_sk < 2452268 
+WHERE ss_sold_date_sk >= 2451146 
+    AND ss_sold_date_sk <= 2452268 
     AND ISNOTNULL(ss_item_sk) 
 GROUP BY ss_item_sk
 ORDER BY quantity DESC LIMIT 5;

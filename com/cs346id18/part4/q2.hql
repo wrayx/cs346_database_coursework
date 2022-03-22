@@ -3,8 +3,8 @@
 --         coalesce(SUM(x.ss_net_paid), 0) AS net_paid 
 -- FROM store_partitioned y LEFT JOIN store_sales_partitioned x
 -- ON (y.s_store_sk = x.ss_store_sk)
--- WHERE ss_sold_date_sk > 2451146 
---     AND ss_sold_date_sk < 2452268 
+-- WHERE ss_sold_date_sk >= 2451146 
+--     AND ss_sold_date_sk <= 2452268 
 --     AND ISNOTNULL(ss_store_sk) 
 -- ORDER BY floor_space DESC, net_paid DESC LIMIT 10;
 
@@ -14,8 +14,8 @@ SELECT  CONCAT("ss_store_sk_", y.s_store_sk) AS ss_store_sk,
 FROM 
     (SELECT ss_store_sk, SUM(ss_net_paid) AS net_paid 
     FROM store_sales_partitioned 
-    WHERE ss_sold_date_sk > 2451146 
-    AND ss_sold_date_sk < 2452268 
+    WHERE ss_sold_date_sk >= 2451146 
+    AND ss_sold_date_sk <= 2452268 
     AND ISNOTNULL(ss_store_sk)
     GROUP BY ss_store_sk) x
 RIGHT JOIN store_partitioned y

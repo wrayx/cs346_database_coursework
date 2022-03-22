@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -21,7 +22,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class TopKItems {
     public static class TopKItemsMapper extends
-            Mapper<LongWritable, Text, IntWritable, FloatWritable> {
+            Mapper<LongWritable, Text, IntWritable, DoubleWritable> {
 
         @Override
         public void map(LongWritable key, Text value, Context context)
@@ -37,7 +38,7 @@ public class TopKItems {
             String item_sk_str = tokens[2];
             String sold_quantity_str = tokens[10];
             long sold_date;
-            float sold_quantity;
+            double sold_quantity;
             int item_id;
 
             // check if the cell is empty
@@ -54,7 +55,7 @@ public class TopKItems {
             }
 
             try {
-                sold_quantity = Float.parseFloat(sold_quantity_str.trim());
+                sold_quantity = Double.parseDouble(sold_quantity_str.trim());
             } catch (NumberFormatException e) {
                 sold_quantity = 0;
             }
@@ -64,14 +65,30 @@ public class TopKItems {
             // so we pass net_paid as key
             if (item_id != -1 && sold_quantity != 0 && sold_date != 0 && sold_date > start_date
                     && sold_date < end_date) {
-                context.write(new IntWritable(item_id), new FloatWritable(sold_quantity));
+                context.write(new IntWritable(item_id), new DoubleWritable(sold_quantity));
             }
 
         }
     }
 
+    public static class TopKItemsCombiner extends 
+            Reducer<IntWritable, DoubleWritable, IntWritable, DoubleWritable> {
+
+        private double total_quantity;
+
+        public void reduce( IntWritable key, Iterable<DoubleWritable> values, Context context)
+        throws IOException, InterruptedException {
+            int store = key.get();
+            total_quantity = 0;
+            for (DoubleWritable value : values) {
+                total_quantity += value.get();
+            }
+            context.write(new IntWritable(store), new DoubleWritable(total_quantity));
+        }
+    }
+
     public static class TopKItemsReducer extends
-            Reducer<IntWritable, FloatWritable, Text, Text> {
+            Reducer<IntWritable, DoubleWritable, Text, Text> {
 
         private TreeMap<Integer, Integer> tmap2;
         private int total_sold_quantity;
@@ -82,7 +99,7 @@ public class TopKItems {
         }
 
         @Override
-        public void reduce(IntWritable key, Iterable<FloatWritable> values, Context context)
+        public void reduce(IntWritable key, Iterable<DoubleWritable> values, Context context)
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
@@ -90,7 +107,7 @@ public class TopKItems {
             int item_id = key.get();
 
             total_sold_quantity = 0;
-            for (FloatWritable value : values) {
+            for (DoubleWritable value : values) {
                 total_sold_quantity += value.get();
             }
             tmap2.put(total_sold_quantity, item_id);
@@ -106,11 +123,11 @@ public class TopKItems {
             for (Map.Entry<Integer, Integer> entry : tmap2.entrySet()) {
                 total_sold_quantity = entry.getKey();
                 int item_id = entry.getValue();
-                String totalNetProfit_str = String.valueOf(total_sold_quantity);
+                String total_sales= String.valueOf(total_sold_quantity);
                 String columnName = "ss_item_sk_";
                 columnName = columnName.concat(Integer.toString(item_id));
 
-                context.write(new Text(columnName), new Text(totalNetProfit_str));
+                context.write(new Text(columnName), new Text(total_sales));
             }
         }
 
@@ -138,10 +155,11 @@ public class TopKItems {
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKItems.class);
         job.setMapperClass(TopKItemsMapper.class);
+        job.setCombinerClass(TopKItemsCombiner.class);
         job.setReducerClass(TopKItemsReducer.class);
 
         job.setMapOutputKeyClass(IntWritable.class);
-        job.setMapOutputValueClass(FloatWritable.class);
+        job.setMapOutputValueClass(DoubleWritable.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 

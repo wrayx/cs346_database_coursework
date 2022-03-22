@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -21,7 +22,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class TopKDays {
     public static class TopKDaysMapper extends
-            Mapper<LongWritable, Text, LongWritable, FloatWritable> {
+            Mapper<LongWritable, Text, LongWritable, DoubleWritable> {
 
         @Override
         public void map(LongWritable key, Text value, Context context)
@@ -37,7 +38,7 @@ public class TopKDays {
             String net_paid_inc_str = tokens[21];
 
             long sold_date;
-            float net_paid_inc;
+            double net_paid_inc;
 
             // check if the cell is empty
 
@@ -48,7 +49,7 @@ public class TopKDays {
             }
 
             try {
-                net_paid_inc = Float.parseFloat(net_paid_inc_str.trim());
+                net_paid_inc = Double.parseDouble(net_paid_inc_str.trim());
             } catch (NumberFormatException e) {
                 net_paid_inc = 0;
             }
@@ -57,14 +58,30 @@ public class TopKDays {
             // we want top K net profit entries
             // so we pass net_paid as key
             if (net_paid_inc != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
-                context.write(new LongWritable(sold_date), new FloatWritable(net_paid_inc));
+                context.write(new LongWritable(sold_date), new DoubleWritable(net_paid_inc));
             }
 
         }
     }
 
+    public static class TopKDaysCombiner extends 
+            Reducer<LongWritable, DoubleWritable, LongWritable, DoubleWritable> {
+
+        private double totalNetPaidIncTax;
+
+        public void reduce( LongWritable key, Iterable<DoubleWritable> values, Context context)
+        throws IOException, InterruptedException {
+            long sold_date = key.get();
+            totalNetPaidIncTax = 0;
+            for (DoubleWritable value : values) {
+                totalNetPaidIncTax += value.get();
+            }
+            context.write(new LongWritable(sold_date), new DoubleWritable(totalNetPaidIncTax));
+        }
+    }
+
     public static class TopKDaysReducer extends
-            Reducer<LongWritable, FloatWritable, Text, Text> {
+            Reducer<LongWritable, DoubleWritable, Text, Text> {
 
         private TreeMap<Double, Long> tmap2;
         private double total_net_paid_inc;
@@ -75,7 +92,7 @@ public class TopKDays {
         }
 
         @Override
-        public void reduce(LongWritable key, Iterable<FloatWritable> values, Context context)
+        public void reduce(LongWritable key, Iterable<DoubleWritable> values, Context context)
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
@@ -83,8 +100,8 @@ public class TopKDays {
 
             long sold_date = key.get();
             total_net_paid_inc = 0;
-            for (FloatWritable value : values) {
-                total_net_paid_inc += (double) value.get();
+            for (DoubleWritable value : values) {
+                total_net_paid_inc += value.get();
             }
             tmap2.put(total_net_paid_inc, sold_date);
 
@@ -132,10 +149,11 @@ public class TopKDays {
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKDays.class);
         job.setMapperClass(TopKDaysMapper.class);
+        job.setCombinerClass(TopKDaysCombiner.class);
         job.setReducerClass(TopKDaysReducer.class);
 
         job.setMapOutputKeyClass(LongWritable.class);
-        job.setMapOutputValueClass(FloatWritable.class);
+        job.setMapOutputValueClass(DoubleWritable.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 

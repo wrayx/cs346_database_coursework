@@ -21,11 +21,7 @@ elif [[ $1 == "b" ]]; then
         rm TopKItems.jar
         hadoop com.sun.tools.javac.Main com/cs346id18/part3/q1b/TopKItems.java
         jar -cf TopKItems.jar com/cs346id18/part3/q1b/TopKItems*.class
-<<<<<<< HEAD
         # hadoop jar TopKItems.jar com.cs346id18.part3.q1b.TopKItems 5 2451146 2452268 input/1G/store_sales/store_sales.dat output/q1b
-=======
-        hadoop jar TopKItems.jar com.cs346id18.part3.q1b.TopKItems 5 2451146 2452268 input/40G/store_sales/store_sales.dat output/q1b
->>>>>>> 333042a949506dc6f9b081474e7a919e52d3ca9a
     fi
 elif [[ $1 == "c" ]]; then
     if [[ $2 == "rm" ]]; then
@@ -37,11 +33,7 @@ elif [[ $1 == "c" ]]; then
         rm TopKDays.jar
         hadoop com.sun.tools.javac.Main com/cs346id18/part3/q1c/TopKDays.java
         jar -cf TopKDays.jar com/cs346id18/part3/q1c/TopKDays*.class
-<<<<<<< HEAD
         # hadoop jar TopKDays.jar com.cs346id18.part3.q1c.TopKDays 10 2451392 2451894 input/1G/store_sales/store_sales.dat output/q1c
-=======
-        hadoop jar TopKDays.jar com.cs346id18.part3.q1c.TopKDays 10 2451392 2451894 input/40G/store_sales/store_sales.dat output/q1c
->>>>>>> 333042a949506dc6f9b081474e7a919e52d3ca9a
     fi
 elif [[ $1 == "2" ]]; then
     if [[ $2 == "rm" ]]; then

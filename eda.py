@@ -25,8 +25,8 @@ print(df_store_sales.head(5))
 
 
 
-# print('Describle the dataset')
-# df_store_sales.describe()
+print('Describle the dataset')
+df_store_sales.describe()
 
 # print('Cardinality of the columns')
 # for col in df_store_sales:
@@ -34,20 +34,20 @@ print(df_store_sales.head(5))
 #     print(df_store_sales[col].name + ": " + str(cardinality))
 
 
-print('Counts of each store')
-store_counts = df_store_sales['Store'].value_counts()
-print(store_counts)
+# print('Counts of each store')
+# store_counts = df_store_sales['Store'].value_counts()
+# print(store_counts)
 
-print('Visualize Missing value')
-fig = mn.matrix(df_store_sales.head(500))
-fig_copy = fig.get_figure()
-fig_copy.savefig('plots/matrix_plot.png', bbox_inches = 'tight')
+# print('Visualize Missing value')
+# fig = mn.matrix(df_store_sales.head(500))
+# fig_copy = fig.get_figure()
+# fig_copy.savefig('plots/matrix_plot.png', bbox_inches = 'tight')
 
 
-df_store_netpaid = df_store_sales.loc[:,['Store','Net Paid']]
+# df_store_netpaid = df_store_sales.loc[:,['Store','Net Paid']]
 
-df_final = df_store_netpaid.groupby('Store',as_index = False).sum()
-df_final.head()
+# df_final = df_store_netpaid.groupby('Store',as_index = False).sum()
+# df_final.head()
 
 
 # df_final.plot.bar(x='Store', y="Net Paid", rot=70, title="Net Paid of Stores")

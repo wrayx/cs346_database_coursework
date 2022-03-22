@@ -31,7 +31,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS store(
     PRIMARY KEY(s_store_sk) DISABLE)
 ROW FORMAT DELIMITED 
 FIELDS TERMINATED BY '|'
-LOCATION '/user/cs346id18/input/1G/store/';
+LOCATION '/user/cs346id18/input/40G/store/';
 
 CREATE EXTERNAL TABLE IF NOT EXISTS store_sales(
     ss_sold_date_sk INT, 

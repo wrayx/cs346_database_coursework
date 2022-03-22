@@ -88,10 +88,17 @@ ss_store_sk_9   000000000.00    6995995
 ss_store_sk_2   477594514.78    5285950
 ss_store_sk_1   475457349.02    5250760
 ss_store_sk_12  000000000.00    5219562
+
+
 ```
 
 ## Hive commands
 ```bash
+
+Try setting those properties to higher values.
+
+SET hive.exec.max.dynamic.partitions=100000;
+SET hive.exec.max.dynamic.partitions.pernode=100000;
 
 # start Beeline client
 $HIVE_HOME/bin/beeline -u jdbc:hive2://

@@ -21,6 +21,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class TopKDays {
+    //mapper phase
     public static class TopKDaysMapper extends
             Mapper<LongWritable, Text, LongWritable, DoubleWritable> {
 
@@ -55,15 +56,15 @@ public class TopKDays {
             }
 
             // insert data into treeMap,
-            // we want top K net profit entries
-            // so we pass net_paid as key
-            if (net_paid_inc != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
+            // we want top K days entries
+            // so we pass net_paid_inc_tax as key
+            if (net_paid_inc != 0 && sold_date != 0 && sold_date >= start_date && sold_date <= end_date) {
                 context.write(new LongWritable(sold_date), new DoubleWritable(net_paid_inc));
             }
 
         }
     }
-
+    //combiner phase, sum up the net paid of each row of each map task
     public static class TopKDaysCombiner extends 
             Reducer<LongWritable, DoubleWritable, LongWritable, DoubleWritable> {
 
@@ -74,21 +75,21 @@ public class TopKDays {
             long sold_date = key.get();
             totalNetPaidIncTax = 0;
             for (DoubleWritable value : values) {
-                totalNetPaidIncTax += value.get();
+                totalNetPaidIncTax += value.get();//sum up the net paid inc tax 
             }
-            context.write(new LongWritable(sold_date), new DoubleWritable(totalNetPaidIncTax));
+            context.write(new LongWritable(sold_date), new DoubleWritable(totalNetPaidIncTax));//return to reducer
         }
     }
-
+    //reducer phase,using tree map to sort the data
     public static class TopKDaysReducer extends
             Reducer<LongWritable, DoubleWritable, Text, Text> {
 
-        private TreeMap<Double, Long> tmap2;
+        private TreeMap<Double, Long> tmap2;//treemap
         private double total_net_paid_inc;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Double, Long>(Comparator.reverseOrder());
+            tmap2 = new TreeMap<Double, Long>(Comparator.reverseOrder());//sort by descending order
         }
 
         @Override
@@ -101,9 +102,9 @@ public class TopKDays {
             long sold_date = key.get();
             total_net_paid_inc = 0;
             for (DoubleWritable value : values) {
-                total_net_paid_inc += value.get();
+                total_net_paid_inc += value.get(); //sum up the net_paid_inc_tax
             }
-            tmap2.put(total_net_paid_inc, sold_date);
+            tmap2.put(total_net_paid_inc, sold_date);//put in tree map
 
             if (tmap2.size() > k) {
                 tmap2.remove(tmap2.lastKey());
@@ -114,7 +115,9 @@ public class TopKDays {
                 InterruptedException {
 
             for (Map.Entry<Double, Long> entry : tmap2.entrySet()) {
-                DecimalFormat df = new DecimalFormat("#.##");
+                //collating data for later use
+                DecimalFormat df = new DecimalFormat("#.##");//set format
+                //key and value are stored in Text datatype for later print
                 total_net_paid_inc = entry.getKey();
                 long sold_date = entry.getValue();
                 String total_net_paid_inc_ss_str = String.valueOf(df.format(total_net_paid_inc));
@@ -134,7 +137,7 @@ public class TopKDays {
                     "Usage: Top Net Profit <K> <start_date> <end_date> <input_file> <output_path>");
             System.exit(-1);
         }
-
+        //get parameters
         String k = args[0];
         String start_date = args[1];
         String end_date = args[2];
@@ -145,7 +148,7 @@ public class TopKDays {
         conf.set("K", k);
         conf.set("start_date", start_date);
         conf.set("end_date", end_date);
-
+        //set job
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKDays.class);
         job.setMapperClass(TopKDaysMapper.class);
@@ -156,7 +159,7 @@ public class TopKDays {
         job.setMapOutputValueClass(DoubleWritable.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
-
+        
         FileInputFormat.addInputPath(job, new Path(source));
         FileOutputFormat.setOutputPath(job, new Path(dest));
 

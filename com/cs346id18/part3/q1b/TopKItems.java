@@ -61,16 +61,16 @@ public class TopKItems {
             }
 
             // insert data into treeMap,
-            // we want top K net profit entries
-            // so we pass net_paid as key
-            if (item_id != -1 && sold_quantity != 0 && sold_date != 0 && sold_date > start_date
-                    && sold_date < end_date) {
+            // we want top K item entries
+            // so we pass quantity as key
+            if (item_id != -1 && sold_quantity != 0 && sold_date != 0 && sold_date >= start_date
+                    && sold_date <= end_date) {
                 context.write(new IntWritable(item_id), new DoubleWritable(sold_quantity));
             }
 
         }
     }
-
+    //combiner phase, sum up the net paid of each row of each map task
     public static class TopKItemsCombiner extends 
             Reducer<IntWritable, DoubleWritable, IntWritable, DoubleWritable> {
 
@@ -81,21 +81,21 @@ public class TopKItems {
             int store = key.get();
             total_quantity = 0;
             for (DoubleWritable value : values) {
-                total_quantity += value.get();
+                total_quantity += value.get();//sum up the quantity
             }
             context.write(new IntWritable(store), new DoubleWritable(total_quantity));
         }
     }
-
+    //reducer phase,using tree map to sort the data
     public static class TopKItemsReducer extends
             Reducer<IntWritable, DoubleWritable, Text, Text> {
 
-        private TreeMap<Integer, Integer> tmap2;
+        private TreeMap<Integer, Integer> tmap2;//treemap
         private int total_sold_quantity;
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap2 = new TreeMap<Integer, Integer>(Comparator.reverseOrder());
+            tmap2 = new TreeMap<Integer, Integer>(Comparator.reverseOrder());//sort by descending order
         }
 
         @Override
@@ -108,9 +108,9 @@ public class TopKItems {
 
             total_sold_quantity = 0;
             for (DoubleWritable value : values) {
-                total_sold_quantity += value.get();
+                total_sold_quantity += value.get();//sum up the quantities
             }
-            tmap2.put(total_sold_quantity, item_id);
+            tmap2.put(total_sold_quantity, item_id);//put in tree
 
             if (tmap2.size() > k) {
                 tmap2.remove(tmap2.lastKey());
@@ -121,6 +121,8 @@ public class TopKItems {
                 InterruptedException {
 
             for (Map.Entry<Integer, Integer> entry : tmap2.entrySet()) {
+                //collating data for later use
+                //key and value are stored in Text datatype for later print
                 total_sold_quantity = entry.getKey();
                 int item_id = entry.getValue();
                 String total_sales= String.valueOf(total_sold_quantity);

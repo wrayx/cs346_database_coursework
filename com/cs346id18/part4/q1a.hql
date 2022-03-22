@@ -1,5 +1,5 @@
 SELECT CONCAT("ss_store_sk_", ss_store_sk) AS store, SUM(ss_net_paid) AS net_paid 
-FROM store_sales
+FROM store_sales_bucketed
 WHERE ss_sold_date_sk > 2451146 
     AND ss_sold_date_sk < 2452268 
     AND ISNOTNULL(ss_store_sk) 
@@ -7,6 +7,20 @@ GROUP BY ss_store_sk
 ORDER BY net_paid DESC LIMIT 10;
 
 -- HIVE output:
+
+-- Total MapReduce CPU Time Spent: 18 seconds 50 msec
+-- OK
+-- +-----------------+---------------+
+-- |      store      |   net_paid    |
+-- +-----------------+---------------+
+-- | ss_store_sk_8   | 479051954.37  |
+-- | ss_store_sk_7   | 479048569.12  |
+-- | ss_store_sk_2   | 477594514.78  |
+-- | ss_store_sk_10  | 476650853.94  |
+-- | ss_store_sk_1   | 475457349.02  |
+-- | ss_store_sk_4   | 475400665.40  |
+-- +-----------------+---------------+
+-- 6 rows selected (42.936 seconds)
 
 -- Total MapReduce CPU Time Spent: 2 minutes 44 seconds 490 msec
 -- OK

@@ -64,7 +64,7 @@ public class TopKFloorSpace {
             // so we pass net_paid as key
             if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
                 String columnName = "ss_store_sk_";
-                context.write(new Text(columnName.concat(store_str)), new Text(totalNetProfit_str + "\tfs"));
+                context.write(new Text(columnName.concat(store_str)), new Text(totalNetProfit_str + "\t0"));
             }
         }
     }
@@ -105,7 +105,7 @@ public class TopKFloorSpace {
             
             if (store != -1){
                 String columnName = "ss_store_sk_";
-                context.write(new Text(columnName.concat(store_str)), new Text("np\t" + floor_space_str));
+                context.write(new Text(columnName.concat(store_str)), new Text("0\t" + floor_space_str));
             }
 
         }
@@ -121,18 +121,25 @@ public class TopKFloorSpace {
             int floorspace = 0;
             for (Text value : values) {
                 String [] parts = value.toString().split("\t");
-                if (parts[0].equals("np")){
-                    floorspace += Integer.parseInt(parts[1]);
-                    totalNetProfit += 0;
+                
+                if (parts.length != 2) {
+                    continue;
                 }
-                else if (parts[1].equals("fs")) {
-                    totalNetProfit += Double.parseDouble(parts[0]);
-                    floorspace += 0;
-                }
-                else {
-                    totalNetProfit += Double.parseDouble(parts[0]);
-                    floorspace += Integer.parseInt(parts[1]);
-                }
+                
+                // if (parts[0].equals("0")){
+                //     floorspace += Integer.parseInt(parts[1]);
+                //     totalNetProfit += 0;
+                // }
+                // else if (parts[1].equals("0")) {
+                //     totalNetProfit += Double.parseDouble(parts[0]);
+                //     floorspace += 0;
+                // }
+                // else {
+                //     totalNetProfit += Double.parseDouble(parts[0]);
+                //     floorspace += Integer.parseInt(parts[1]);
+                // }
+                totalNetProfit += Double.parseDouble(parts[0]);
+                floorspace += Integer.parseInt(parts[1]);
             }
 
             String totalNetProfit_str = String.valueOf(totalNetProfit);
@@ -210,18 +217,22 @@ public class TopKFloorSpace {
             int floorspace = 0;
             for (Text value : values) {
                 String [] parts = value.toString().split("\t");
-                if (parts[0].equals("np")){
-                    floorspace += Integer.parseInt(parts[1]);
-                    totalNetProfit += 0;
+                if (parts.length != 2) {
+                    continue;
                 }
-                else if (parts[1].equals("fs")) {
-                    totalNetProfit += Double.parseDouble(parts[0]);
-                    floorspace += 0;
-                }
-                else {
-                    totalNetProfit += Double.parseDouble(parts[0]);
-                    floorspace += Integer.parseInt(parts[1]);
-                }
+                // if (parts[0].equals("0")){
+                totalNetProfit += Double.parseDouble(parts[0]);
+                floorspace += Integer.parseInt(parts[1]);
+                    // totalNetProfit += 0;
+                // }
+                // else if (parts[1].equals("0")) {
+                //     totalNetProfit += Double.parseDouble(parts[0]);
+                //     floorspace += 0;
+                // }
+                // else {
+                //     totalNetProfit += Double.parseDouble(parts[0]);
+                //     floorspace += Integer.parseInt(parts[1]);
+                // }
             }
             DecimalFormat df = new DecimalFormat("#.##");
             df.setMinimumFractionDigits(2);

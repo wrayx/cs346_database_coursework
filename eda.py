@@ -1,37 +1,38 @@
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt 
-#visualisation
-# get_ipython().run_line_magic('matplotlib', 'inline')
+import numpy as np
+import pandas as pd
+import dask.dataframe as dd
+import dask.array as da
+import dask.bag as db
 import missingno as mn
 
 
 #Read CSV
 store_sales_cols = [0, 1, 2, 7, 10, 20, 21]
 store_sales_header_list = ["Sold Date", "Sold Time", "Item","Store","Quantity","Net Paid","Inc Tax"]
-df_store_sales = pd.read_csv("/dcs/cs346/tpcds/40G/store_sales.dat",
+df_store_sales = dd.read_csv("/dcs/cs346/tpcds/40G/store_sales.dat",
                              sep = '|',
                              names = store_sales_header_list,
                              usecols = store_sales_cols)
 print(df_store_sales.head(5))
 
 
-# print('Shape of the dataset:')
-# df_store_sales.shape
+print('Shape of the dataset:')
+df_store_sales.shape
 
 
-# print('Data types of the dataset: ')
-# df_store_sales.info()
+print('Data types of the dataset: ')
+df_store_sales.info()
 
 
 
 print('Describle the dataset')
 df_store_sales.describe()
 
-# print('Cardinality of the columns')
-# for col in df_store_sales:
-#     cardinality = len(pd.Index(df_store_sales[col]).value_counts())
-#     print(df_store_sales[col].name + ": " + str(cardinality))
+print('Cardinality of the columns')
+for col in df_store_sales:
+    cardinality = len(pd.Index(df_store_sales[col]).value_counts())
+    print(df_store_sales[col].name + ": " + str(cardinality))
 
 
 # print('Counts of each store')
@@ -48,8 +49,10 @@ df_store_sales.describe()
 
 # df_final = df_store_netpaid.groupby('Store',as_index = False).sum()
 # df_final.head()
-
-
 # df_final.plot.bar(x='Store', y="Net Paid", rot=70, title="Net Paid of Stores")
 # plt.show(block=True)
 # plt.savefig('plots/bar_chart.png', bbox_inches='tight')
+
+# plt.figure(figsize=(20,10))
+# plt.hist(df_store_sales['Sold Date'], bins=175 ,edgecolor='black', density=1)
+# plt.show() 

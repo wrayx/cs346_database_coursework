@@ -65,7 +65,7 @@ public class TopKNetProfit {
             /** insert data into treeMap,
                 we want top K net profit entries
                 so we pass net_paid as key */
-            if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
+            if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date >= start_date && sold_date <= end_date) {
                 context.write(new IntWritable(store), new DoubleWritable(net_paid));
             }
 
@@ -96,7 +96,7 @@ public class TopKNetProfit {
 
         public void setup(Context context) throws IOException,
                 InterruptedException {
-            tmap = new TreeMap<Double, Integer>(Comparator.reverseOrder());
+            tmap = new TreeMap<Double, Integer>(Comparator.reverseOrder());//sort by descending order
         }
 
         @Override
@@ -109,9 +109,9 @@ public class TopKNetProfit {
             int store = key.get();
             totalNetProfit = 0;
             for (DoubleWritable value : values) {
-                totalNetProfit += value.get();
+                totalNetProfit += value.get();//sum up the net paid
             }
-            tmap.put(totalNetProfit, store);
+            tmap.put(totalNetProfit, store);//put in tree
 
             if (tmap.size() > k) {
                 tmap.remove(tmap.lastKey());
@@ -122,6 +122,8 @@ public class TopKNetProfit {
                 InterruptedException {
 
             for (Map.Entry<Double, Integer> entry : tmap.entrySet()) {
+                //collating data for later use
+                //key and value are stored in Text datatype for later print
                 DecimalFormat df = new DecimalFormat("#.##");
                 totalNetProfit = (double) entry.getKey();
                 int store = entry.getValue();
@@ -135,40 +137,6 @@ public class TopKNetProfit {
 
     }
 
-
-    // public static class TopKNetProfitPartitioner extends Partitioner <IntWritable, FloatWritable>{
-    //     @Override
-    //     public int getPartition(IntWritable key, FloatWritable value, int numReduceTasks)
-    //     {
-    //         String[] tokens = value.toString().split(Pattern.quote("|"), -1);
-    //         String sold_date_str = tokens[0];
-    //         long sold_date = 0;
-    //         try {
-    //             sold_date = Long.parseLong(sold_date_str.trim());
-    //         } catch (NumberFormatException e) {
-    //             sold_date = 0;
-    //         }
-
-    //         if(numReduceTasks == 0)
-    //         {
-    //             return 0;
-    //         }
-            
-    //         if(sold_date<2451146)
-    //         {
-    //             return 0;
-    //         }
-    //         else if(sold_date>=2451146 && sold_date <= 2452268)
-    //         {
-    //             return 1 % numReduceTasks;
-    //         }
-    //         else
-    //         {
-    //             return 2 % numReduceTasks;
-    //         }
-    //     }
-    // }
-
     public static void main(String[] args) throws Exception {
 
         if (args.length != 5) {
@@ -176,7 +144,7 @@ public class TopKNetProfit {
                     "Usage: Top Net Profit <K> <start_date> <end_date> <input_file> <output_path>");
             System.exit(-1);
         }
-
+        //get parameters
         String k = args[0];
         String start_date = args[1];
         String end_date = args[2];
@@ -187,14 +155,13 @@ public class TopKNetProfit {
         conf.set("K", k);
         conf.set("start_date", start_date);
         conf.set("end_date", end_date);
-
+        //set job
         Job job = Job.getInstance(conf, "TopK");
         job.setJarByClass(TopKNetProfit.class);
         job.setMapperClass(TopKNetProfitMapper.class);
-        // job.setPartitionerClass(TopKNetProfitPartitioner.class);
         job.setCombinerClass(TopKNetProfitCombiner.class);
         job.setReducerClass(TopKNetProfitReducer.class);
-        // job.setNumReduceTasks(3);
+
         job.setMapOutputKeyClass(IntWritable.class);
         job.setMapOutputValueClass(DoubleWritable.class);
         job.setOutputKeyClass(Text.class);

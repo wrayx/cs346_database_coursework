@@ -33,21 +33,21 @@ ORDER BY quantity DESC LIMIT 10;
 
 -- partitioned table 
 
--- Total MapReduce CPU Time Spent: 3 minutes 7 seconds 650 msec
+-- Total MapReduce CPU Time Spent: 3 minutes 24 seconds 560 msec
 -- OK
 -- +-------------------+-----------+
 -- |       item        | quantity  |
 -- +-------------------+-----------+
--- | ss_item_sk_42163  | 141287    |
--- | ss_item_sk_42415  | 140664    |
--- | ss_item_sk_6031   | 140125    |
--- | ss_item_sk_37267  | 139776    |
--- | ss_item_sk_67     | 139345    |
--- | ss_item_sk_15139  | 139229    |
--- | ss_item_sk_3337   | 139170    |
--- | ss_item_sk_21883  | 139038    |
--- | ss_item_sk_33655  | 138886    |
--- | ss_item_sk_4651   | 138880    |
+-- | ss_item_sk_42163  | 141597    |
+-- | ss_item_sk_42415  | 141410    |
+-- | ss_item_sk_6031   | 140559    |
+-- | ss_item_sk_37267  | 140361    |
+-- | ss_item_sk_67     | 139750    |
+-- | ss_item_sk_15139  | 139658    |
+-- | ss_item_sk_3337   | 139633    |
+-- | ss_item_sk_33655  | 139563    |
+-- | ss_item_sk_37459  | 139370    |
+-- | ss_item_sk_10741  | 139345    |
 -- +-------------------+-----------+
 -- 10 rows selected (135.551 seconds
 

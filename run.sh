@@ -45,7 +45,7 @@ elif [[ $1 == "2" ]]; then
         rm TopKFloorSpace.jar
         hadoop com.sun.tools.javac.Main com/cs346id18/part3/q2/TopKFloorSpace.java
         jar -cf TopKFloorSpace.jar com/cs346id18/part3/q2/TopKFloorSpace*.class
-        # hadoop jar TopKFloorSpace.jar com.cs346id18.part3.q2.TopKFloorSpace 10 2451146 2452268 input/1G/store_sales/store_sales.dat input/1G/store/store.dat output/q2
+        hadoop jar TopKFloorSpace.jar com.cs346id18.part3.q2.TopKFloorSpace 10 2451146 2452268 input/40G/store_sales/store_sales.dat input/40G/store/store.dat output/q2
     fi
 else
     echo "usage: ./run.sh <query: a/b/c> <action: rm/cat/compile>"

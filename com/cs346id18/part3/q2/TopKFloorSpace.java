@@ -40,7 +40,7 @@ public class TopKFloorSpace {
             float net_paid;
             int store;
 
-            // check if the cell is empty
+            // check if any cell is empty
             try {
                 store = Integer.parseInt(store_str.trim());
             } catch (NumberFormatException e) {
@@ -62,7 +62,7 @@ public class TopKFloorSpace {
             // insert data into treeMap,
             // we want top K net profit entries
             // so we pass net_paid as key
-            if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date > start_date && sold_date < end_date) {
+            if (store != -1 && net_paid != 0 && sold_date != 0 && sold_date >= start_date && sold_date <= end_date) {
                 String columnName = "ss_store_sk_";
                 context.write(new Text(columnName.concat(store_str)), new Text(totalNetProfit_str + "\t0"));
             }
@@ -72,38 +72,30 @@ public class TopKFloorSpace {
     public static class StoreDataMapper extends
             Mapper<LongWritable, Text, Text, Text> {
 
-        // private TreeMap<Float, Integer> tmap;
-
-        // @Override
-        // public void setup(Context context) throws IOException,
-        //         InterruptedException {
-        //     tmap = new TreeMap<Float, Integer>((Comparator.reverseOrder()));
-        // }
-
         @Override
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException {
 
             String[] tokens = value.toString().split(Pattern.quote("|"), -1);
-            // for (String t: tokens){
-            // System.out.print(t);
-            // System.out.print("===");
-            // }
-            // System.out.println();
-            // long sold_date = Long.parseLong(tokens[0].trim());
             String store_str = tokens[0];
             String floor_space_str = tokens[7];
             int store;
-            // int floor_space;
+            int floor_space;
 
-            // check if the cell is empty
+            // check if any cell is empty
             try {
                 store = Integer.parseInt(store_str.trim());
             } catch (NumberFormatException e) {
                 store = -1;
             }
+
+            try {
+                floor_space = Integer.parseInt(floor_space_str.trim());
+            } catch (NumberFormatException e) {
+                floor_space = -1;
+            }
             
-            if (store != -1){
+            if (store != -1 && floor_space != -1){
                 String columnName = "ss_store_sk_";
                 context.write(new Text(columnName.concat(store_str)), new Text("0\t" + floor_space_str));
             }
@@ -126,19 +118,9 @@ public class TopKFloorSpace {
                     continue;
                 }
                 
-                // if (parts[0].equals("0")){
-                //     floorspace += Integer.parseInt(parts[1]);
-                //     totalNetProfit += 0;
-                // }
-                // else if (parts[1].equals("0")) {
-                //     totalNetProfit += Double.parseDouble(parts[0]);
-                //     floorspace += 0;
-                // }
-                // else {
-                //     totalNetProfit += Double.parseDouble(parts[0]);
-                //     floorspace += Integer.parseInt(parts[1]);
-                // }
+                // the first part of the string contains the NetProfit value
                 totalNetProfit += Double.parseDouble(parts[0]);
+                // the second part of the string contains the floor space value
                 floorspace += Integer.parseInt(parts[1]);
             }
 
